@@ -1,0 +1,71 @@
+{% extends 'member/base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">Request a Loan</h1>
+    
+    <!-- Status Message -->
+    <div id="alert-box" class="hidden mb-4 p-4 rounded-xl text-sm font-medium"></div>
+
+    <form id="loan-form" class="space-y-6">
+        {% csrf_token %}
+        
+        <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Loan Amount (₹)</label>
+            <input type="number" id="loan-amount" required placeholder="e.g. 50000" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tenure (Months)</label>
+            <select id="loan-tenure" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                <option value="6">6 Months</option>
+                <option value="12" selected>12 Months</option>
+                <option value="18">18 Months</option>
+                <option value="24">24 Months</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition shadow-sm shadow-emerald-600/20">
+            Submit Application
+        </button>
+    </form>
+</div>
+
+<script>
+document.getElementById('loan-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const amount = document.getElementById('loan-amount').value;
+    const tenureMonths = document.getElementById('loan-tenure').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const btn = document.getElementById('submit-btn');
+    const alertBox = document.getElementById('alert-box');
+    
+    btn.innerText = 'Submitting...';
+    btn.disabled = true;
+
+    fetch('/api/loans/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ amount: amount, tenure_months: tenureMonths })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alertBox.className = "mb-4 p-4 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 block";
+        alertBox.innerText = data.message || "Loan application submitted successfully.";
+        document.getElementById('loan-form').reset();
+        btn.innerText = 'Submit Application';
+        btn.disabled = false;
+    })
+    .catch(err => {
+        console.error("Loan Request Error:", err);
+        alertBox.className = "mb-4 p-4 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 block";
+        alertBox.innerText = 'An error occurred. Please try again.';
+        btn.innerText = 'Submit Application';
+        btn.disabled = false;
+    });
+});
+</script>
+{% endblock %}

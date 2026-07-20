@@ -1,0 +1,154 @@
+{% extends 'member/base.html' %}
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Overview</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Here is a summary of your current savings and loans.</p>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Savings Card -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center gap-5">
+            <div class="p-4 bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-950/60 dark:to-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-2xl shadow-inner border border-emerald-200/50 dark:border-emerald-900/50">
+                <i data-lucide="wallet" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Total Savings</p>
+                <h2 id="dash-savings" class="text-3xl font-bold text-slate-900 dark:text-white">
+                    <span class="text-slate-300 dark:text-slate-600 text-2xl">₹</span>--
+                </h2>
+            </div>
+        </div>
+
+        <!-- Loans Card -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center gap-5">
+            <div class="p-4 bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-950/60 dark:to-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-2xl shadow-inner border border-indigo-200/50 dark:border-indigo-900/50">
+                <i data-lucide="landmark" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Active Loans</p>
+                <h2 id="dash-loans" class="text-3xl font-bold text-slate-900 dark:text-white">--</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/60 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 dark:text-white">Recent Transactions</h3>
+            <i data-lucide="clock" class="w-5 h-5 text-slate-400 dark:text-slate-500"></i>
+        </div>
+        
+        <!-- Skeleton Loader -->
+        <div id="loading-spinner" class="p-6">
+            <div class="animate-pulse flex flex-col space-y-4">
+                <div class="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
+                <div class="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
+                <div class="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div id="tx-container" class="hidden overflow-x-auto">
+            <table class="w-full text-left whitespace-nowrap">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                        <th class="px-6 py-4 rounded-tl-lg">Transaction Type</th>
+                        <th class="px-6 py-4">Date</th>
+                        <th class="px-6 py-4 text-right rounded-tr-lg">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="dash-tx-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <!-- Data injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Re-initialize Lucide icons for the new content
+    lucide.createIcons();
+
+    // Helper function to format numbers in Indian Rupee format
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        }).format(amount);
+    };
+
+    fetch('/api/dashboard/')
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            // Update Stats
+            document.getElementById('dash-savings').innerText = formatCurrency(data.total_savings || 0);
+            document.getElementById('dash-loans').innerText = data.active_loans_count || 0;
+            
+            // Toggle UI states
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('tx-container').classList.remove('hidden');
+            
+            const txList = document.getElementById('dash-tx-list');
+            txList.innerHTML = '';
+            
+            // Populate Transactions
+            if (data.recent_transactions && data.recent_transactions.length > 0) {
+                data.recent_transactions.forEach(tx => {
+                    const isLoan = tx.transaction_type.toLowerCase().includes('loan');
+                    const dotColor = isLoan ? 'bg-indigo-500' : 'bg-emerald-500';
+                    
+                    txList.innerHTML += `
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center gap-2 text-slate-700 dark:text-slate-300 capitalize font-medium">
+                                    <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+                                    ${tx.transaction_type}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">${tx.date}</td>
+                            <td class="px-6 py-4 text-right font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                                ${formatCurrency(tx.amount)}
+                            </td>
+                        </tr>`;
+                });
+            } else {
+                // Better Empty State
+                txList.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                                <i data-lucide="inbox" class="w-10 h-10 mb-3 text-slate-300 dark:text-slate-600"></i>
+                                <p class="text-base font-medium text-slate-500 dark:text-slate-400">No recent transactions</p>
+                                <p class="text-sm mt-1 text-slate-400 dark:text-slate-500">When you make a transaction, it will appear here.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                lucide.createIcons(); // Re-render icons for empty state
+            }
+        })
+        .catch(err => {
+            console.error("Dashboard Fetch Error:", err);
+            document.getElementById('loading-spinner').innerHTML = `
+                <div class="p-6 text-center text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl m-4 border border-red-100 dark:border-red-900/50">
+                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-80"></i>
+                    <p class="font-medium">Failed to load dashboard data.</p>
+                    <p class="text-sm opacity-80 mt-1">Please try refreshing the page.</p>
+                </div>
+            `;
+            lucide.createIcons();
+        });
+});
+</script>
+{% endblock %}

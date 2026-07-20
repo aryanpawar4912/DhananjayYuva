@@ -1,0 +1,195 @@
+{% extends 'member/base.html' %}
+{% block content %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div class="space-y-8">
+    
+    <!-- Header & Quick Deposit Action -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Savings Passbook Ledger</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your deposits, withdrawals, and real-time running balances.</p>
+        </div>
+        <button onclick="openDepositModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-sm shadow-emerald-600/20 text-sm">
+            + Add Online Savings
+        </button>
+    </div>
+
+    <!-- Passbook Ledger Table -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 dark:text-white">Transaction Ledger</h3>
+            <span id="current-balance" class="text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 rounded-full">Balance: ₹0.00</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">Date & Time</th>
+                        <th class="px-6 py-4 font-semibold">Type</th>
+                        <th class="px-6 py-4 font-semibold text-right">Amount (₹)</th>
+                        <th class="px-6 py-4 font-semibold text-right">Running Balance (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="savings-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">Loading savings passbook...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Simple Deposit Modal -->
+<div id="deposit-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Add Savings Deposit</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Enter the amount you wish to add securely via Razorpay.</p>
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Amount (₹)</label>
+            <input type="number" id="deposit-amount" placeholder="e.g. 1000" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+        </div>
+        <div class="flex gap-3 pt-2">
+            <button onclick="closeDepositModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold py-3 rounded-xl text-sm transition">Cancel</button>
+            <button onclick="paySavingsDeposit()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-600/30">Proceed to Pay</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetchSavingsData();
+});
+
+function fetchSavingsData() {
+    fetch('/api/savings/')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('savings-tbody');
+            tbody.innerHTML = '';
+            
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No savings records found.</td></tr>';
+                document.getElementById('current-balance').innerText = 'Balance: ₹0.00';
+                return;
+            }
+
+            // Update header balance with the latest transaction's running balance
+            document.getElementById('current-balance').innerText = `Balance: ₹${data[0].running_balance}`;
+
+            data.forEach(item => {
+                const isDeposit = item.transaction_type === 'deposit';
+                const typeBadge = isDeposit 
+                    ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Deposit</span>'
+                    : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400">Withdrawal</span>';
+                
+                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+                const sign = isDeposit ? '+' : '-';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400">${item.date}</td>
+                        <td class="px-6 py-4">${typeBadge}</td>
+                        <td class="px-6 py-4 text-right font-semibold ${amountColor}">${sign}₹${item.amount}</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900 dark:text-white">₹${item.running_balance}</td>
+                    </tr>`;
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching savings:', err);
+            document.getElementById('savings-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Failed to load savings ledger.</td></tr>';
+        });
+}
+
+function openDepositModal() {
+    document.getElementById('deposit-modal').classList.remove('hidden');
+    document.getElementById('deposit-modal').classList.add('flex');
+}
+
+function closeDepositModal() {
+    document.getElementById('deposit-modal').classList.remove('flex');
+    document.getElementById('deposit-modal').classList.add('hidden');
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function paySavingsDeposit() {
+    const amount = document.getElementById('deposit-amount').value;
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid deposit amount.');
+        return;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+    
+    try {
+        const response = await fetch('/api/create-razorpay-order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ amount: amount, type: 'savings' })
+        });
+        
+        const orderData = await response.json();
+        if (!response.ok) {
+            alert(orderData.error || 'Failed to initiate payment.');
+            return;
+        }
+
+        const options = {
+            "key": orderData.key,
+            "amount": orderData.amount,
+            "currency": orderData.currency,
+            "name": "DhananjayYuva",
+            "description": "Savings Account Deposit",
+            "order_id": orderData.order_id,
+            "handler": async function (response) {
+                const verifyRes = await fetch('/api/verify-razorpay-payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature,
+                        type: 'savings',
+                        amount: amount
+                    })
+                });
+
+                if (verifyRes.ok) {
+                    alert('Savings deposit successful!');
+                    closeDepositModal();
+                    fetchSavingsData();
+                } else {
+                    alert('Payment verification failed.');
+                }
+            },
+            "theme": { "color": "#10b981" }
+        };
+        
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } catch (err) {
+        console.error(err);
+        alert('Something went wrong during payment initialization.');
+    }
+}
+</script>
+{% endblock %}

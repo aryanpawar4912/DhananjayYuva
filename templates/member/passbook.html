@@ -1,0 +1,110 @@
+{% extends 'member/base.html' %}
+{% block content %}
+<style>
+    @media print {
+        body {
+            background-color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        aside, header {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="space-y-8">
+    
+    <!-- Header (Hidden on print) -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Master Passbook Statement</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Chronological record of all your financial activity, savings, and loan repayments.</p>
+        </div>
+        <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium text-sm shadow-sm shadow-emerald-600/20 flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print / Download PDF
+        </button>
+    </div>
+
+    <!-- Printable Colorful Branded Header (Visible only when printing) -->
+    <div class="hidden print:block mb-6 p-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl shadow-sm">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-3 rounded-xl shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Dhananjay<span class="text-emerald-600">Yuva</span></h1>
+                    <p class="text-xs text-emerald-700 font-bold uppercase tracking-widest mt-0.5">Official Member Passbook Statement</p>
+                </div>
+            </div>
+            <div class="text-right text-xs text-slate-700 space-y-1 bg-white p-3 rounded-xl border border-emerald-100">
+                <p><strong>Member Account:</strong> <span class="text-emerald-700 font-semibold">{{ request.user.username }}</span></p>
+                <p><strong>Statement Date:</strong> <span id="print-date"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passbook Ledger Table -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors print:shadow-none print:border print:border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 print:bg-slate-100">
+            <h3 class="font-bold text-slate-800 dark:text-white print:text-slate-900">Transaction History Ledger</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 print:bg-slate-100 print:text-slate-700">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold print:py-3">Date & Time</th>
+                        <th class="px-6 py-4 font-semibold print:py-3">Description</th>
+                        <th class="px-6 py-4 font-semibold print:py-3">Type</th>
+                        <th class="px-6 py-4 font-semibold text-right print:py-3">Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="passbook-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 print:divide-slate-200">
+                    <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">Loading master passbook statement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('print-date').innerText = new Date().toLocaleString();
+
+    fetch('/api/passbook/')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('passbook-tbody');
+            tbody.innerHTML = '';
+            
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">No passbook records found.</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const isDeposit = item.type === 'deposit';
+                const badge = isDeposit 
+                    ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Credit</span>'
+                    : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">Debit</span>';
+                
+                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200';
+                const sign = isDeposit ? '+' : '-';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors print:hover:bg-transparent">
+                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400 print:py-3 print:text-slate-700">${item.date}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800 dark:text-slate-200 print:py-3 print:text-slate-900">${item.description}</td>
+                        <td class="px-6 py-4 print:py-3">${badge}</td>
+                        <td class="px-6 py-4 text-right font-semibold ${amountColor} print:py-3">${sign}₹${item.amount}</td>
+                    </tr>`;
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching passbook:', err);
+            document.getElementById('passbook-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Failed to load passbook ledger.</td></tr>';
+        });
+});
+</script>
+{% endblock %}

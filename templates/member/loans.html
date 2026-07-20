@@ -1,0 +1,252 @@
+{% extends 'member/base.html' %}
+{% block content %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div class="space-y-8">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Loan Management</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track loans, view installment schedules, and make online EMI payments.</p>
+        </div>
+        <a href="{% url 'request_loan' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-sm shadow-emerald-600/20">Request New Loan</a>
+    </div>
+    
+    <!-- Active Loans Container -->
+    <div id="loans-container" class="space-y-6">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-8 text-center text-slate-400">
+            Loading loans and repayment schedules...
+        </div>
+    </div>
+
+    <!-- Payment History Table -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors mt-8">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
+            <h3 class="font-bold text-slate-800 dark:text-white">Repayment History</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">Loan ID</th>
+                        <th class="px-6 py-4 font-semibold">Date Paid</th>
+                        <th class="px-6 py-4 font-semibold text-right">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody id="repay-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">Loading payments...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Fetch Loans & Schedules Data
+    fetch('/api/loans/')
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('loans-container');
+            container.innerHTML = '';
+            
+            if(!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-12 text-center">
+                        <p class="text-slate-400 dark:text-slate-500 font-medium">No active loans found. Request a loan to view your repayment schedules here.</p>
+                    </div>`;
+                return;
+            }
+
+            data.forEach(loan => {
+                let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                const status = loan.status ? loan.status.toLowerCase() : 'pending';
+                
+                if (status === 'approved' || status === 'completed') {
+                    badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+                } else if (status === 'pending') {
+                    badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+                } else if (status === 'rejected') {
+                    badgeClass = 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/50';
+                }
+
+                let installmentsHtml = '';
+                if (loan.installments && loan.installments.length > 0) {
+                    let rows = loan.installments.map(inst => `
+                        <tr class="text-slate-700 dark:text-slate-300">
+                            <td class="p-4 font-medium">${inst.installment_number}</td>
+                            <td class="p-4">${inst.due_date}</td>
+                            <td class="p-4">₹${inst.principal_amount}</td>
+                            <td class="p-4">₹${inst.interest_amount}</td>
+                            <td class="p-4 font-bold text-slate-900 dark:text-white">₹${inst.total_amount}</td>
+                            <td class="p-4">
+                                ${inst.is_paid 
+                                    ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Paid</span>' 
+                                    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Pending</span>'}
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    installmentsHtml = `
+                        <div class="mt-6">
+                            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Repayment Schedule Breakdown</h4>
+                            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                            <th class="p-3 font-semibold">#</th>
+                                            <th class="p-3 font-semibold">Due Date</th>
+                                            <th class="p-3 font-semibold">Principal</th>
+                                            <th class="p-3 font-semibold">Interest</th>
+                                            <th class="p-3 font-semibold">EMI</th>
+                                            <th class="p-3 font-semibold">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        ${rows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 sm:p-8">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white font-mono">Loan #${loan.id}</h3>
+                                    <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${badgeClass}">${loan.status}</span>
+                                </div>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                    Amount: <strong class="text-slate-800 dark:text-slate-200">₹${loan.amount}</strong> | 
+                                    Interest: ${loan.interest_rate}% | 
+                                    Tenure: ${loan.tenure_months} Months | 
+                                    Applied: ${new Date(loan.date).toLocaleDateString()}
+                                </p>
+                            </div>
+
+                            ${status === 'approved' ? `
+                                <button onclick="payEMI('${loan.emi_amount}', '${loan.id}')" 
+                                        class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-5 rounded-xl transition shadow-sm shadow-emerald-600/20 text-xs">
+                                    Pay EMI (₹${loan.emi_amount})
+                                </button>
+                            ` : ''}
+                        </div>
+                        ${installmentsHtml}
+                    </div>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching loans:', err);
+            document.getElementById('loans-container').innerHTML = '<div class="p-6 text-center text-red-500">Failed to load loans.</div>';
+        });
+
+    // 2. Fetch Repayment History Data
+    fetch('/api/repayments/')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('repay-tbody');
+            tbody.innerHTML = '';
+            
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No repayment history found.</td></tr>';
+            } else {
+                data.forEach(pay => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td class="px-6 py-4 font-mono text-slate-600 dark:text-slate-400">#${pay.loan__id}</td>
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400">${new Date(pay.date).toLocaleDateString()}</td>
+                            <td class="px-6 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">₹${pay.amount_paid}</td>
+                        </tr>`;
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching repayments:', err);
+            document.getElementById('repay-tbody').innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-red-500">Failed to load payment history.</td></tr>';
+        });
+});
+
+// Razorpay Integration Handler
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function payEMI(amount, loanId) {
+    const csrftoken = getCookie('csrftoken');
+    
+    try {
+        const response = await fetch('/api/create-razorpay-order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ amount: amount, type: 'emi', loan_id: loanId })
+        });
+        
+        const orderData = await response.json();
+        if (!response.ok) {
+            alert(orderData.error || 'Failed to initiate payment.');
+            return;
+        }
+
+        const options = {
+            "key": orderData.key,
+            "amount": orderData.amount,
+            "currency": orderData.currency,
+            "name": "DhananjayYuva",
+            "description": "Loan EMI Payment",
+            "order_id": orderData.order_id,
+            "handler": async function (response) {
+                const verifyRes = await fetch('/api/verify-razorpay-payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature,
+                        type: 'emi',
+                        amount: amount,
+                        loan_id: loanId
+                    })
+                });
+
+                if (verifyRes.ok) {
+                    alert('EMI payment successful!');
+                    window.location.reload();
+                } else {
+                    alert('Payment verification failed.');
+                }
+            },
+            "theme": { "color": "#10b981" }
+        };
+        
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } catch (err) {
+        console.error(err);
+        alert('Something went wrong during payment initialization.');
+    }
+}
+</script>
+{% endblock %}

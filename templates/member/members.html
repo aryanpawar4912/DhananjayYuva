@@ -1,0 +1,81 @@
+{% extends "member/base.html" %}
+
+{% block title %}Members Registry | Dhananjay Yuva{% endblock %}
+{% block active_registry %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .search-bar { display: flex; align-items: center; background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px; flex-grow: 1; max-width: 400px; }
+    .search-bar input { border: none; outline: none; margin-left: 8px; width: 100%; font-size: 0.95rem; }
+    .btn-primary { background-color: var(--secondary-navy); color: var(--white); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    
+    /* Card Grid specifically optimized for mobile rendering */
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    
+    .member-card { background: var(--white); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; transition: transform 0.2s; }
+    .member-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    .member-avatar { width: 64px; height: 64px; border-radius: 50%; background-color: var(--bg-light); border: 2px solid var(--accent-gold); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary-navy); font-weight: 700; margin-bottom: 12px; }
+    .member-name { font-size: 1.1rem; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+    .member-joined { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
+    
+    .member-stats { width: 100%; display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); padding-top: 16px; margin-bottom: 16px; }
+    .stat-col p { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .stat-col h4 { font-size: 1rem; color: var(--secondary-navy); font-weight: 700; }
+    
+    .btn-outline { width: 100%; background: transparent; border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; color: var(--text-dark); font-size: 0.9rem; cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-controls">
+    <div class="search-bar">
+        <i data-lucide="search" style="color: var(--text-muted); width: 20px;"></i>
+        <input type="text" placeholder="Search members by name...">
+    </div>
+    <button class="btn-primary">
+        <i data-lucide="user-plus" style="width: 18px;"></i> Add New Member
+    </button>
+</div>
+
+<div class="member-grid">
+    <!-- Member Card 1 -->
+    <div class="member-card">
+        <div class="member-avatar">DS</div>
+        <div class="member-name">Dhananjay Shinde</div>
+        <div class="member-joined">Joined Jan 2023</div>
+        
+        <div class="member-stats">
+            <div class="stat-col">
+                <p>Saved</p>
+                <h4>₹12,500</h4>
+            </div>
+            <div class="stat-col">
+                <p>Status</p>
+                <h4 style="color: var(--success);">Active</h4>
+            </div>
+        </div>
+        <button class="btn-outline">View Profile</button>
+    </div>
+
+    <!-- Member Card 2 -->
+    <div class="member-card">
+        <div class="member-avatar">SK</div>
+        <div class="member-name">Sandeep Kedare</div>
+        <div class="member-joined">Joined Mar 2023</div>
+        
+        <div class="member-stats">
+            <div class="stat-col">
+                <p>Saved</p>
+                <h4>₹11,000</h4>
+            </div>
+            <div class="stat-col">
+                <p>Status</p>
+                <h4 style="color: var(--success);">Active</h4>
+            </div>
+        </div>
+        <button class="btn-outline">View Profile</button>
+    </div>
+</div>
+{% endblock %}
