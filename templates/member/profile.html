@@ -1,101 +1,189 @@
 {% extends 'member/base.html' %}
 {% block content %}
-<div class="max-w-3xl mx-auto space-y-8 px-4 sm:px-0 py-6 transition-all duration-300">
-    
-    <!-- Header Title Section -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+<!-- Styles & Animations -->
+<style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(16px);
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="relative space-y-8 max-w-4xl mx-auto w-full z-10 py-6 px-4 sm:px-0">
+
+    <!-- Header Section -->
+    <div class="fade-in-up flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Account Settings</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your personal preferences, contact info, and role details.</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60">
+                <i data-lucide="user-cog" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Account Control</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Account Settings
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                Manage your personal preferences, contact info, and network credentials.
+            </p>
         </div>
     </div>
-    
-    <!-- Main Form Container Card -->
-    <div class="bg-white dark:bg-slate-900/90 backdrop-blur-xl p-6 sm:p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 transition-all duration-300">
+
+    <!-- Alert Notification Box -->
+    <div id="prof-msg" class="hidden fade-in-up p-4 rounded-2xl text-sm font-semibold flex items-center gap-3 transition-all"></div>
+
+    <!-- Main Form Card -->
+    <div class="fade-in-up bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-10 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-xl relative overflow-hidden">
         
-        <!-- Avatar Header Section with Pulse Animation -->
-        <div class="flex items-center gap-5 mb-8 pb-6 border-b border-slate-100 dark:border-slate-800">
+        <!-- Background Glow Accent -->
+        <div class="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Avatar & Profile Intro Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8 pb-8 border-b border-slate-100 dark:border-slate-800/80">
             <div class="relative group">
-                <div id="avatar-container" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 text-white font-bold text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-emerald-600/30 transform transition-all duration-300 group-hover:scale-105 group-hover:rotate-1 select-none">
+                <div id="avatar-container" class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 text-white font-extrabold text-3xl sm:text-4xl flex items-center justify-center shadow-xl shadow-emerald-600/30 transform transition-transform duration-300 group-hover:scale-105 select-none">
                     <span id="avatar-initial">--</span>
                 </div>
-                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"></div>
+                <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"></div>
             </div>
-            <div>
-                <h2 class="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Profile Information</h2>
-                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Updates reflect securely across the network ledger</p>
+            <div class="space-y-1">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>Secure Profile</span>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Profile Information</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Updates synchronize securely across the network ledger.</p>
             </div>
         </div>
 
         <form id="profile-form" class="space-y-6">
             {% csrf_token %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 <!-- Username (Read-only) -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Username <span class="text-slate-400 font-normal">(Fixed)</span></label>
-                    <input type="text" id="prof-username" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-400 dark:text-slate-500 cursor-not-allowed select-none text-sm" disabled>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Username <span class="text-slate-400 font-normal normal-case">(Fixed)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="at-sign" class="w-5 h-5"></i>
+                        </div>
+                        <input type="text" id="prof-username" disabled 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-100/60 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 font-bold border border-slate-200 dark:border-slate-700/80 rounded-2xl cursor-not-allowed select-none text-sm">
+                    </div>
                 </div>
                 
                 <!-- Full Name -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
-                    <input type="text" id="prof-name" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="Enter your full name">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Full Name <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                        <input type="text" id="prof-name" placeholder="Enter your full name" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm">
+                    </div>
                 </div>
 
                 <!-- Email Address -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
-                    <input type="email" id="prof-email" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="name@example.com">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Email Address <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </div>
+                        <input type="email" id="prof-email" placeholder="name@example.com" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm">
+                    </div>
                 </div>
 
                 <!-- Phone Number -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Phone Number</label>
-                    <input type="text" id="prof-phone" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="10-digit mobile number">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Phone Number <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="phone" class="w-5 h-5"></i>
+                        </div>
+                        <input type="text" id="prof-phone" placeholder="10-digit mobile number" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm">
+                    </div>
                 </div>
 
                 <!-- Village -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Village</label>
-                    <input type="text" id="prof-village" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="Enter village name">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Village <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        </div>
+                        <input type="text" id="prof-village" placeholder="Enter village name" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm">
+                    </div>
                 </div>
 
                 <!-- Role Dropdown Selection -->
                 <div class="space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Account Role</label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Account Role <span class="text-rose-500">*</span>
+                    </label>
                     <div class="relative">
-                        <select id="prof-role" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm appearance-none cursor-pointer">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="shield" class="w-5 h-5"></i>
+                        </div>
+                        <select id="prof-role" class="w-full pl-11 pr-10 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm appearance-none cursor-pointer">
                             <option value="member">Member</option>
                             <option value="user">User</option>
                         </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Full Address (Span full row width) -->
+                <!-- Full Residential Address -->
                 <div class="sm:col-span-2 space-y-2">
-                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Residential Address</label>
-                    <textarea id="prof-address" rows="2" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm resize-none" placeholder="Enter full address"></textarea>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Residential Address
+                    </label>
+                    <div class="relative">
+                        <div class="absolute top-3.5 left-4 pointer-events-none text-slate-400">
+                            <i data-lucide="home" class="w-5 h-5"></i>
+                        </div>
+                        <textarea id="prof-address" rows="3" placeholder="Enter full address details" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-sm resize-none"></textarea>
+                    </div>
                 </div>
             </div>
             
-            <!-- Save Button and Response Feedback Msg -->
-            <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <button type="submit" id="save-prof-btn" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 px-8 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-                    <span>Save Changes</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <!-- Submit Button Section -->
+            <div class="pt-4 flex items-center justify-end">
+                <button type="submit" id="save-prof-btn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white font-extrabold py-4 px-8 rounded-2xl transition shadow-lg shadow-emerald-600/25 text-sm sm:text-base">
+                    <i data-lucide="save" id="btn-icon" class="w-5 h-5"></i>
+                    <span id="btn-text">Save Changes</span>
                 </button>
             </div>
-            <div id="prof-msg" class="mt-4 text-sm font-medium hidden transition-all duration-300"></div>
         </form>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) {
+        lucide.createIcons();
+    }
     
     // Dynamic avatar initial setter
     const updateAvatarInitial = (name) => {
@@ -135,10 +223,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('#profile-form [name=csrfmiddlewaretoken]').value;
         const msgBox = document.getElementById('prof-msg');
         const btn = document.getElementById('save-prof-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnIcon = document.getElementById('btn-icon');
         
         // Show loading spinner inside button
-        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+        btnText.innerText = 'Saving Changes...';
+        btnIcon.setAttribute('data-lucide', 'loader-2');
+        btnIcon.classList.add('animate-spin');
         btn.disabled = true;
+        if (window.lucide) lucide.createIcons();
         
         const currentName = document.getElementById('prof-name').value;
 
@@ -157,25 +250,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 address: document.getElementById('prof-address').value
             })
         })
-        .then(res => res.json())
-        .then(data => {
-            btn.innerHTML = `<span>Save Changes</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-            btn.disabled = false;
-            msgBox.innerText = data.message || "Profile updated successfully.";
-            msgBox.className = "mt-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl text-sm font-medium text-emerald-700 dark:text-emerald-300 block shadow-sm transition-all";
-            updateAvatarInitial(currentName);
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(res => {
+            if (res.status >= 200 && res.status < 300) {
+                msgBox.className = "fade-in-up mb-4 p-4 rounded-2xl text-sm font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 block";
+                msgBox.innerHTML = `
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                    <span>${res.body.message || "Profile updated successfully."}</span>
+                `;
+                updateAvatarInitial(currentName);
+                if (window.lucide) lucide.createIcons();
 
-            // Auto-hide success message after 4 seconds
-            setTimeout(() => {
-                msgBox.classList.add('opacity-0');
-                setTimeout(() => msgBox.classList.add('hidden'), 300);
-            }, 4000);
+                // Auto-hide success message after 4 seconds
+                setTimeout(() => {
+                    msgBox.classList.add('opacity-0');
+                    setTimeout(() => msgBox.classList.add('hidden'), 300);
+                }, 4000);
+            } else {
+                throw new Error(res.body.error || res.body.message || 'Failed to update profile.');
+            }
         })
-        .catch(() => {
-            btn.innerHTML = `<span>Save Changes</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+        .catch(err => {
+            console.error("Profile update error:", err);
+            msgBox.className = "fade-in-up mb-4 p-4 rounded-2xl text-sm font-semibold bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 flex items-center gap-3 block";
+            msgBox.innerHTML = `
+                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0"></i>
+                <span>${err.message || 'Failed to update profile. Please try again.'}</span>
+            `;
+            if (window.lucide) lucide.createIcons();
+        })
+        .finally(() => {
+            btnText.innerText = 'Save Changes';
+            btnIcon.setAttribute('data-lucide', 'save');
+            btnIcon.classList.remove('animate-spin');
             btn.disabled = false;
-            msgBox.innerText = "Failed to update profile. Please try again.";
-            msgBox.className = "mt-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-sm font-medium text-red-700 dark:text-red-300 block shadow-sm";
+            if (window.lucide) lucide.createIcons();
         });
     });
 });

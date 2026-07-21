@@ -1,76 +1,197 @@
 {% extends 'member/base.html' %}
 {% block content %}
+
+<!-- Print-Specific Styles & Animations -->
 <style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Print Optimizations */
     @media print {
+        @page {
+            margin: 15mm;
+            size: A4 portrait;
+        }
         body {
             background-color: #ffffff !important;
+            color: #0f172a !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
-        aside, header {
+        aside, header, nav, .print\:hidden {
             display: none !important;
+        }
+        .print-card-clean {
+            box-shadow: none !important;
+            border: 1px solid #cbd5e1 !important;
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+        }
+        .print\:border-slate-300 {
+            border-color: #cbd5e1 !important;
+        }
+        tr {
+            page-break-inside: avoid;
         }
     }
 </style>
 
-<div class="space-y-8">
+<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10">
     
-    <!-- Header (Hidden on print) -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+    <!-- Screen Header (Hidden on Print) -->
+    <div class="fade-in-up flex flex-col md:flex-row md:items-end justify-between gap-4 print:hidden">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Master Passbook Statement</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Chronological record of all your financial activity, savings, and loan repayments.</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Financial Summary</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Master Passbook Statement
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                Chronological record of all your financial activity, savings, and loan repayments.
+            </p>
         </div>
-        <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium text-sm shadow-sm shadow-emerald-600/20 flex items-center gap-2">
-            <i data-lucide="printer" class="w-4 h-4"></i> Print / Download PDF
-        </button>
+
+        <div class="flex items-center gap-3">
+            <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 text-sm">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Print / Download PDF</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Printable Colorful Branded Header (Visible only when printing) -->
-    <div class="hidden print:block mb-6 p-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl shadow-sm">
+    <!-- Printable Branded Header (Visible ONLY on print) -->
+    <div class="hidden print:block mb-8 p-6 bg-slate-50 border border-slate-300 rounded-2xl">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-3 rounded-xl shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <div class="bg-emerald-600 text-white p-3 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Dhananjay<span class="text-emerald-600">Yuva</span></h1>
-                    <p class="text-xs text-emerald-700 font-bold uppercase tracking-widest mt-0.5">Official Member Passbook Statement</p>
+                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Dhananjay<span class="text-emerald-600">Yuva</span></h1>
+                    <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 mt-0.5">Official Member Master Statement</p>
                 </div>
             </div>
-            <div class="text-right text-xs text-slate-700 space-y-1 bg-white p-3 rounded-xl border border-emerald-100">
-                <p><strong>Member Account:</strong> <span class="text-emerald-700 font-semibold">{{ request.user.username }}</span></p>
-                <p><strong>Statement Date:</strong> <span id="print-date"></span></p>
+            <div class="text-right text-xs text-slate-700 space-y-1 bg-white p-4 rounded-xl border border-slate-200">
+                <p><strong>Member Account:</strong> <span class="text-slate-900 font-bold">{{ request.user.username }}</span></p>
+                <p><strong>Statement Date:</strong> <span id="print-date" class="font-semibold text-slate-700"></span></p>
+                <p><strong>Status:</strong> <span class="text-emerald-600 font-bold">Verified Digital Copy</span></p>
             </div>
         </div>
     </div>
 
-    <!-- Passbook Ledger Table -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors print:shadow-none print:border print:border-slate-200">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 print:bg-slate-100">
-            <h3 class="font-bold text-slate-800 dark:text-white print:text-slate-900">Transaction History Ledger</h3>
+    <!-- Quick Dynamic Stats Cards (Hidden on Print) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 print:hidden">
+        <div class="fade-in-up delay-100 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Activity</span>
+                <h3 id="stat-total-count" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1 tabular-nums">0</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Recorded Transactions</p>
+            </div>
+            <div class="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                <i data-lucide="history" class="w-6 h-6"></i>
+            </div>
         </div>
+
+        <div class="fade-in-up delay-200 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Credits</span>
+                <h3 id="stat-total-credits" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">₹0.00</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Deposits & Adjustments</p>
+            </div>
+            <div class="p-3 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <i data-lucide="arrow-down-left" class="w-6 h-6"></i>
+            </div>
+        </div>
+
+        <div class="fade-in-up delay-300 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Debits</span>
+                <h3 id="stat-total-debits" class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1 tabular-nums">₹0.00</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Withdrawals & Repayments</p>
+            </div>
+            <div class="p-3 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl">
+                <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passbook Ledger Table Card -->
+    <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden print-card-clean relative z-10">
+        
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 print:bg-slate-100 print:border-slate-300">
+            <div>
+                <h3 class="font-extrabold text-slate-900 dark:text-white print:text-slate-900 flex items-center gap-2">
+                    <i data-lucide="receipt" class="w-5 h-5 text-emerald-500 print:hidden"></i> Master Transaction Ledger
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">Unified financial activity statement</p>
+            </div>
+            <div class="print:hidden inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Audit Verified
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 print:bg-slate-100 print:text-slate-700">
+            <table class="w-full text-sm text-left whitespace-nowrap">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold border-b border-slate-100 dark:border-slate-800 print:bg-slate-100 print:text-slate-700 print:border-slate-300">
                     <tr>
-                        <th class="px-6 py-4 font-semibold print:py-3">Date & Time</th>
-                        <th class="px-6 py-4 font-semibold print:py-3">Description</th>
-                        <th class="px-6 py-4 font-semibold print:py-3">Type</th>
-                        <th class="px-6 py-4 font-semibold text-right print:py-3">Amount (₹)</th>
+                        <th class="px-6 py-4 print:py-3">Date & Time</th>
+                        <th class="px-6 py-4 print:py-3">Description</th>
+                        <th class="px-6 py-4 print:py-3">Type</th>
+                        <th class="px-6 py-4 text-right print:py-3">Amount (₹)</th>
                     </tr>
                 </thead>
                 <tbody id="passbook-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 print:divide-slate-200">
-                    <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">Loading master passbook statement...</td></tr>
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                                <p class="text-xs font-medium">Loading master passbook statement...</p>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
+
+        <!-- Print Footer Signatures (Visible only on print) -->
+        <div class="hidden print:flex justify-between items-end p-8 pt-16 mt-8 border-t border-slate-200 text-xs text-slate-600">
+            <div class="text-center w-48 border-t border-slate-400 pt-2">
+                <p class="font-bold">Member Signature</p>
+            </div>
+            <div class="text-center w-48 border-t border-slate-400 pt-2">
+                <p class="font-bold">Authorized Signatory</p>
+                <p class="text-[10px] text-slate-500">DhananjayYuva Authority</p>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('print-date').innerText = new Date().toLocaleString();
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+
+    // Set printable statement date
+    document.getElementById('print-date').innerText = new Date().toLocaleString('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
 
     fetch('/api/passbook/')
         .then(res => res.json())
@@ -79,31 +200,81 @@ document.addEventListener('DOMContentLoaded', function() {
             tbody.innerHTML = '';
             
             if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">No passbook records found.</td></tr>';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3">
+                                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+                                </div>
+                                <p class="text-base font-bold text-slate-700 dark:text-slate-300">No statement history found</p>
+                                <p class="text-xs text-slate-400 mt-1">There are no master ledger records available for this account.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                if (window.lucide) lucide.createIcons();
                 return;
             }
 
+            let totalCredits = 0;
+            let totalDebits = 0;
+
             data.forEach(item => {
-                const isDeposit = item.type === 'deposit';
+                const isDeposit = item.type && (item.type.toLowerCase() === 'deposit' || item.type.toLowerCase() === 'credit');
+                const numAmount = parseFloat(item.amount) || 0;
+
+                if (isDeposit) {
+                    totalCredits += numAmount;
+                } else {
+                    totalDebits += numAmount;
+                }
+
                 const badge = isDeposit 
-                    ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Credit</span>'
-                    : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">Debit</span>';
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 print:border-slate-300 print:bg-slate-100 print:text-emerald-800">
+                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5 print:hidden"></i> Credit
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50 print:border-slate-300 print:bg-slate-100 print:text-amber-800">
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 print:hidden"></i> Debit
+                       </span>`;
                 
-                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200';
+                const amountColor = isDeposit 
+                    ? 'text-emerald-600 dark:text-emerald-400 print:text-emerald-700' 
+                    : 'text-slate-800 dark:text-slate-200 print:text-slate-900';
                 const sign = isDeposit ? '+' : '-';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors print:hover:bg-transparent">
-                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400 print:py-3 print:text-slate-700">${item.date}</td>
-                        <td class="px-6 py-4 font-medium text-slate-800 dark:text-slate-200 print:py-3 print:text-slate-900">${item.description}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors print:hover:bg-transparent">
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs md:text-sm print:py-3 print:text-slate-800">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-slate-400 print:hidden"></i>
+                                ${item.date}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200 print:py-3 print:text-slate-900">
+                            ${item.description}
+                        </td>
                         <td class="px-6 py-4 print:py-3">${badge}</td>
-                        <td class="px-6 py-4 text-right font-semibold ${amountColor} print:py-3">${sign}₹${item.amount}</td>
+                        <td class="px-6 py-4 text-right font-extrabold tabular-nums ${amountColor} print:py-3">
+                            ${sign}₹${Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
                     </tr>`;
             });
+
+            // Update Header Stats
+            document.getElementById('stat-total-count').innerText = data.length;
+            document.getElementById('stat-total-credits').innerText = '₹' + totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            document.getElementById('stat-total-debits').innerText = '₹' + totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+            if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
             console.error('Error fetching passbook:', err);
-            document.getElementById('passbook-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Failed to load passbook ledger.</td></tr>';
+            document.getElementById('passbook-tbody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-rose-500 font-bold">
+                        Failed to load master passbook ledger.
+                    </td>
+                </tr>`;
         });
 });
 </script>

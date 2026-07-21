@@ -2,49 +2,148 @@
 {% block content %}
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<div class="space-y-8">
+<!-- Styles & Entrance Animations -->
+<style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(16px);
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10">
     
-    <!-- Header -->
-    <div class="flex justify-between items-center">
+    <!-- Page Header -->
+    <div class="fade-in-up flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Loan Management</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track loans, view installment schedules, and make online EMI payments.</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60">
+                <i data-lucide="coins" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Credit & Financing</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Loan Management
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                Track active loans, inspect installment schedules, and settle EMIs securely via online payment.
+            </p>
         </div>
-        <a href="{% url 'request_loan' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-sm shadow-emerald-600/20">Request New Loan</a>
-    </div>
-    
-    <!-- Active Loans Container -->
-    <div id="loans-container" class="space-y-6">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-8 text-center text-slate-400">
-            Loading loans and repayment schedules...
+
+        <div>
+            <a href="{% url 'request_loan' %}" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 text-sm">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Request New Loan</span>
+            </a>
         </div>
     </div>
 
-    <!-- Payment History Table -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors mt-8">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
-            <h3 class="font-bold text-slate-800 dark:text-white">Repayment History</h3>
+    <!-- Quick Stats Cards Summary -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="fade-in-up delay-100 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Active Accounts</span>
+                <h3 id="stat-active-loans" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1 tabular-nums">0</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Total Loan Applications</p>
+            </div>
+            <div class="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                <i data-lucide="landmark" class="w-6 h-6"></i>
+            </div>
         </div>
+
+        <div class="fade-in-up delay-200 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Borrowed</span>
+                <h3 id="stat-total-borrowed" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">₹0.00</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Approved Principal Sum</p>
+            </div>
+            <div class="p-3 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+        </div>
+
+        <div class="fade-in-up delay-300 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Repaid</span>
+                <h3 id="stat-total-repaid" class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">₹0.00</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Cleared Repayment Amount</p>
+            </div>
+            <div class="p-3 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Loans Section -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between px-1">
+            <h2 class="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="layers" class="w-5 h-5 text-emerald-500"></i> Active & Pending Loans
+            </h2>
+        </div>
+
+        <!-- Dynamic Loans Container -->
+        <div id="loans-container" class="space-y-6">
+            <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-12 text-center">
+                <div class="inline-flex items-center justify-center p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 mb-3 animate-pulse">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
+                </div>
+                <p class="text-slate-500 dark:text-slate-400 font-semibold text-sm">Loading loans and repayment schedules...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repayment History Section -->
+    <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+            <div>
+                <h3 class="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="history" class="w-5 h-5 text-emerald-500"></i> Repayment History
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Log of completed EMI & principal payments</p>
+            </div>
+            <div class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Gateway Verified
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold border-b border-slate-100 dark:border-slate-800">
                     <tr>
-                        <th class="px-6 py-4 font-semibold">Loan ID</th>
-                        <th class="px-6 py-4 font-semibold">Date Paid</th>
-                        <th class="px-6 py-4 font-semibold text-right">Amount Paid</th>
+                        <th class="px-6 py-4">Loan ID</th>
+                        <th class="px-6 py-4">Date Paid</th>
+                        <th class="px-6 py-4 text-right">Amount Paid</th>
                     </tr>
                 </thead>
                 <tbody id="repay-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
-                    <tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">Loading payments...</td></tr>
+                    <tr>
+                        <td colspan="3" class="px-6 py-10 text-center text-slate-400 dark:text-slate-500">
+                            <div class="inline-flex items-center gap-2">
+                                <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-500"></i>
+                                <span>Loading payments...</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+
     // 1. Fetch Loans & Schedules Data
     fetch('/api/loans/')
         .then(res => res.json())
@@ -52,56 +151,75 @@ document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('loans-container');
             container.innerHTML = '';
             
-            if(!data || data.length === 0) {
+            if (!data || data.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-12 text-center">
-                        <p class="text-slate-400 dark:text-slate-500 font-medium">No active loans found. Request a loan to view your repayment schedules here.</p>
+                    <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-12 text-center">
+                        <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-400">
+                            <i data-lucide="file-x" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">No Active Loans Found</h4>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 max-w-md mx-auto mt-1">You currently have no active or historical loans. Click "Request New Loan" above to submit an application.</p>
                     </div>`;
+                if (window.lucide) lucide.createIcons();
                 return;
             }
 
+            let totalBorrowedSum = 0;
+            document.getElementById('stat-active-loans').innerText = data.length;
+
             data.forEach(loan => {
-                let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+                let iconName = 'clock';
                 const status = loan.status ? loan.status.toLowerCase() : 'pending';
                 
                 if (status === 'approved' || status === 'completed') {
-                    badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+                    badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60';
+                    iconName = 'check-circle';
+                    totalBorrowedSum += parseFloat(loan.amount) || 0;
                 } else if (status === 'pending') {
-                    badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+                    badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60';
+                    iconName = 'hourglass';
                 } else if (status === 'rejected') {
-                    badgeClass = 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/50';
+                    badgeClass = 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800/60';
+                    iconName = 'x-circle';
                 }
 
                 let installmentsHtml = '';
                 if (loan.installments && loan.installments.length > 0) {
                     let rows = loan.installments.map(inst => `
-                        <tr class="text-slate-700 dark:text-slate-300">
-                            <td class="p-4 font-medium">${inst.installment_number}</td>
-                            <td class="p-4">${inst.due_date}</td>
-                            <td class="p-4">₹${inst.principal_amount}</td>
-                            <td class="p-4">₹${inst.interest_amount}</td>
-                            <td class="p-4 font-bold text-slate-900 dark:text-white">₹${inst.total_amount}</td>
-                            <td class="p-4">
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors text-slate-700 dark:text-slate-300">
+                            <td class="p-3.5 font-bold text-slate-900 dark:text-slate-100">#${inst.installment_number}</td>
+                            <td class="p-3.5 font-medium text-slate-500 dark:text-slate-400">${inst.due_date}</td>
+                            <td class="p-3.5 font-medium tabular-nums">₹${Number(inst.principal_amount).toLocaleString('en-IN')}</td>
+                            <td class="p-3.5 font-medium tabular-nums">₹${Number(inst.interest_amount).toLocaleString('en-IN')}</td>
+                            <td class="p-3.5 font-extrabold text-slate-900 dark:text-white tabular-nums">₹${Number(inst.total_amount).toLocaleString('en-IN')}</td>
+                            <td class="p-3.5">
                                 ${inst.is_paid 
-                                    ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Paid</span>' 
-                                    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Pending</span>'}
+                                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
+                                        <i data-lucide="check" class="w-3 h-3"></i> Paid
+                                       </span>` 
+                                    : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        <i data-lucide="clock" class="w-3 h-3"></i> Pending
+                                       </span>`}
                             </td>
                         </tr>
                     `).join('');
 
                     installmentsHtml = `
-                        <div class="mt-6">
-                            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Repayment Schedule Breakdown</h4>
-                            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                                <table class="w-full text-left border-collapse text-xs">
+                        <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-500"></i> Repayment Schedule Breakdown
+                            </h4>
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
                                     <thead>
-                                        <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                                            <th class="p-3 font-semibold">#</th>
-                                            <th class="p-3 font-semibold">Due Date</th>
-                                            <th class="p-3 font-semibold">Principal</th>
-                                            <th class="p-3 font-semibold">Interest</th>
-                                            <th class="p-3 font-semibold">EMI</th>
-                                            <th class="p-3 font-semibold">Status</th>
+                                        <tr class="bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200/80 dark:border-slate-800">
+                                            <th class="p-3.5">#</th>
+                                            <th class="p-3.5">Due Date</th>
+                                            <th class="p-3.5">Principal</th>
+                                            <th class="p-3.5">Interest</th>
+                                            <th class="p-3.5">EMI Amount</th>
+                                            <th class="p-3.5">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -114,25 +232,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 container.innerHTML += `
-                    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 sm:p-8">
-                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
-                            <div>
+                    <div class="fade-in-up bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                            <div class="space-y-3">
                                 <div class="flex items-center gap-3">
-                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white font-mono">Loan #${loan.id}</h3>
-                                    <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${badgeClass}">${loan.status}</span>
+                                    <h3 class="text-xl font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">Loan #${loan.id}</h3>
+                                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${badgeClass}">
+                                        <i data-lucide="${iconName}" class="w-3.5 h-3.5"></i>
+                                        ${loan.status}
+                                    </span>
                                 </div>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    Amount: <strong class="text-slate-800 dark:text-slate-200">₹${loan.amount}</strong> | 
-                                    Interest: ${loan.interest_rate}% | 
-                                    Tenure: ${loan.tenure_months} Months | 
-                                    Applied: ${new Date(loan.date).toLocaleDateString()}
-                                </p>
+                                
+                                <div class="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                    <div class="flex items-center gap-1.5">
+                                        <i data-lucide="indian-rupee" class="w-4 h-4 text-emerald-500"></i>
+                                        <span>Amount: <strong class="text-slate-900 dark:text-slate-100 font-bold">₹${Number(loan.amount).toLocaleString('en-IN')}</strong></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <i data-lucide="percent" class="w-4 h-4 text-indigo-500"></i>
+                                        <span>Interest: <strong class="text-slate-900 dark:text-slate-100 font-bold">${loan.interest_rate}%</strong></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <i data-lucide="hourglass" class="w-4 h-4 text-amber-500"></i>
+                                        <span>Tenure: <strong class="text-slate-900 dark:text-slate-100 font-bold">${loan.tenure_months} Months</strong></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <i data-lucide="calendar-days" class="w-4 h-4 text-slate-400"></i>
+                                        <span>Applied: <strong class="text-slate-700 dark:text-slate-300 font-semibold">${new Date(loan.date).toLocaleDateString()}</strong></span>
+                                    </div>
+                                </div>
                             </div>
 
                             ${status === 'approved' ? `
                                 <button onclick="payEMI('${loan.emi_amount}', '${loan.id}')" 
-                                        class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-5 rounded-xl transition shadow-sm shadow-emerald-600/20 text-xs">
-                                    Pay EMI (₹${loan.emi_amount})
+                                        class="w-full lg:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-bold py-3.5 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/20 text-xs sm:text-sm">
+                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                    <span>Pay EMI (₹${Number(loan.emi_amount).toLocaleString('en-IN')})</span>
                                 </button>
                             ` : ''}
                         </div>
@@ -140,10 +275,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             });
+
+            document.getElementById('stat-total-borrowed').innerText = '₹' + totalBorrowedSum.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
             console.error('Error fetching loans:', err);
-            document.getElementById('loans-container').innerHTML = '<div class="p-6 text-center text-red-500">Failed to load loans.</div>';
+            document.getElementById('loans-container').innerHTML = `
+                <div class="p-8 text-center bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-[2rem] text-rose-600 font-bold text-sm">
+                    Failed to load loans schedule. Please try refreshing the page.
+                </div>`;
         });
 
     // 2. Fetch Repayment History Data
@@ -153,22 +294,51 @@ document.addEventListener('DOMContentLoaded', function() {
             const tbody = document.getElementById('repay-tbody');
             tbody.innerHTML = '';
             
-            if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No repayment history found.</td></tr>';
-            } else {
-                data.forEach(pay => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                            <td class="px-6 py-4 font-mono text-slate-600 dark:text-slate-400">#${pay.loan__id}</td>
-                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400">${new Date(pay.date).toLocaleDateString()}</td>
-                            <td class="px-6 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">₹${pay.amount_paid}</td>
-                        </tr>`;
-                });
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-10 text-center text-slate-400 dark:text-slate-500">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <i data-lucide="inbox" class="w-6 h-6 text-slate-400"></i>
+                                <span class="text-xs font-semibold">No repayment history records available.</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                if (window.lucide) lucide.createIcons();
+                return;
             }
+
+            let totalRepaidSum = 0;
+
+            data.forEach(pay => {
+                const amountPaid = parseFloat(pay.amount_paid) || 0;
+                totalRepaidSum += amountPaid;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="px-6 py-4 font-mono font-bold text-slate-800 dark:text-slate-200">
+                            #${pay.loan__id}
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
+                            ${new Date(pay.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </td>
+                        <td class="px-6 py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            +₹${amountPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById('stat-total-repaid').innerText = '₹' + totalRepaidSum.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
             console.error('Error fetching repayments:', err);
-            document.getElementById('repay-tbody').innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-red-500">Failed to load payment history.</td></tr>';
+            document.getElementById('repay-tbody').innerHTML = `
+                <tr>
+                    <td colspan="3" class="px-6 py-8 text-center text-rose-500 font-bold text-xs">
+                        Failed to load payment history.
+                    </td>
+                </tr>`;
         });
 });
 

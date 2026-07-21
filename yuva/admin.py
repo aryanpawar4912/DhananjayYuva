@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Member, Loan, LoanInstallment, SavingsTransaction, Repayment, Notification
+from .models import Member, Loan, LoanInstallment, SavingsTransaction, Repayment, Notification, Document
 
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
@@ -32,3 +32,8 @@ class RepaymentAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('member', 'message', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('member', 'file', 'uploaded_at')
+    list_filter = ('uploaded_at',)

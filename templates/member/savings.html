@@ -1,65 +1,240 @@
 {% extends 'member/base.html' %}
 {% block content %}
+
+<!-- Razorpay Checkout SDK -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<div class="space-y-8">
+<!-- Custom Styles for Animations & Background Orbs -->
+<style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
     
-    <!-- Header & Quick Deposit Action -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .float { animation: float 6s ease-in-out infinite; }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+    }
+
+    .bg-orb-1 {
+        position: absolute; top: -40px; left: -40px; width: 220px; height: 220px;
+        background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%);
+        border-radius: 50%; z-index: 0; pointer-events: none;
+    }
+    .bg-orb-2 {
+        position: absolute; top: 20%; right: -50px; width: 260px; height: 260px;
+        background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+        border-radius: 50%; z-index: 0; pointer-events: none;
+    }
+</style>
+
+<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10">
+    
+    <!-- Decorative Glow Backgrounds -->
+    <div class="bg-orb-1"></div>
+    <div class="bg-orb-2"></div>
+
+    <!-- Header & Quick Action -->
+    <div class="fade-in-up flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Savings Passbook Ledger</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your deposits, withdrawals, and real-time running balances.</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Savings & Ledger</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                Savings Details
+                <span class="float text-2xl">📖</span>
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                Track your deposits, withdrawals, and real-time running balances seamlessly.
+            </p>
         </div>
-        <button onclick="openDepositModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-sm shadow-emerald-600/20 text-sm">
-            + Add Online Savings
+
+        <button onclick="openDepositModal()" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 text-sm">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <span>Add Online Savings</span>
         </button>
     </div>
 
-    <!-- Passbook Ledger Table -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800 dark:text-white">Transaction Ledger</h3>
-            <span id="current-balance" class="text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 rounded-full">Balance: ₹0.00</span>
+    <!-- Passbook Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+        <!-- Current Balance Card -->
+        <div class="fade-in-up delay-100 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Current Balance</span>
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h3 id="current-balance" class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                    ₹0.00
+                </h3>
+                <p class="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-2">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified Active Account
+                </p>
+            </div>
         </div>
+
+        <!-- Total Records Count Card -->
+        <div class="fade-in-up delay-200 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Entries</span>
+                <div class="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                    <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h3 id="entry-count" class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                    0
+                </h3>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    Recorded Passbook Transactions
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Deposit Banner Card -->
+        <div class="fade-in-up delay-300 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-[2rem] border border-slate-700 shadow-lg relative overflow-hidden flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Instant Deposit</span>
+                    <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+                </div>
+                <p class="text-sm text-slate-300 mt-2 font-medium">Add funds directly using UPI, Cards, or NetBanking.</p>
+            </div>
+            <button onclick="openDepositModal()" class="mt-4 text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 group">
+                Deposit Now <i data-lucide="arrow-right" class="w-4 h-4 transition-transform group-hover:translate-x-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Passbook Ledger Table Card -->
+    <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden relative z-10">
+        
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+            <div>
+                <h3 class="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="list-ordered" class="w-5 h-5 text-emerald-500"></i> Transaction Ledger
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Historical activity sorted by latest first</p>
+            </div>
+            <div id="live-indicator" class="hidden items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 w-fit">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Ledger Synced
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+            <table class="w-full text-sm text-left whitespace-nowrap">
+                <thead class="bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold border-b border-slate-100 dark:border-slate-800">
                     <tr>
-                        <th class="px-6 py-4 font-semibold">Date & Time</th>
-                        <th class="px-6 py-4 font-semibold">Type</th>
-                        <th class="px-6 py-4 font-semibold text-right">Amount (₹)</th>
-                        <th class="px-6 py-4 font-semibold text-right">Running Balance (₹)</th>
+                        <th class="px-6 py-4">Date & Time</th>
+                        <th class="px-6 py-4">Transaction Type</th>
+                        <th class="px-6 py-4 text-right">Amount (₹)</th>
+                        <th class="px-6 py-4 text-right">Running Balance (₹)</th>
                     </tr>
                 </thead>
                 <tbody id="savings-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
-                    <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">Loading savings passbook...</td></tr>
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                                <p class="text-xs font-medium">Loading savings passbook...</p>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Simple Deposit Modal -->
-<div id="deposit-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Add Savings Deposit</h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Enter the amount you wish to add securely via Razorpay.</p>
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Amount (₹)</label>
-            <input type="number" id="deposit-amount" placeholder="e.g. 1000" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+<!-- Modernized Deposit Modal -->
+<div id="deposit-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-all">
+    <div class="bg-white dark:bg-slate-900 max-w-md w-full p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-2xl space-y-6 relative overflow-hidden transform transition-all scale-100">
+        
+        <!-- Top Accent Glow -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">Add Savings Deposit</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter the deposit amount to process securely via Razorpay.</p>
+            </div>
+            <button onclick="closeDepositModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl bg-slate-100 dark:bg-slate-800 transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Deposit Amount</label>
+                <div class="relative flex items-center">
+                    <span class="absolute left-4 text-xl font-bold text-slate-400 dark:text-slate-500">₹</span>
+                    <input type="number" id="deposit-amount" placeholder="e.g. 1000" min="1" class="w-full pl-9 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 text-lg font-bold transition tabular-nums">
+                </div>
+            </div>
+
+            <!-- Quick Preset Pills -->
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Select</span>
+                <div class="grid grid-cols-4 gap-2 mt-2">
+                    <button type="button" onclick="setDepositAmount(500)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹500</button>
+                    <button type="button" onclick="setDepositAmount(1000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹1,000</button>
+                    <button type="button" onclick="setDepositAmount(2000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹2,000</button>
+                    <button type="button" onclick="setDepositAmount(5000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹5,000</button>
+                </div>
+            </div>
+        </div>
+
         <div class="flex gap-3 pt-2">
-            <button onclick="closeDepositModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold py-3 rounded-xl text-sm transition">Cancel</button>
-            <button onclick="paySavingsDeposit()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-600/30">Proceed to Pay</button>
+            <button onclick="closeDepositModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3.5 rounded-2xl text-sm transition">
+                Cancel
+            </button>
+            <button id="pay-btn" onclick="paySavingsDeposit()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+                <span>Proceed to Pay</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) {
+        lucide.createIcons();
+    }
     fetchSavingsData();
 });
 
+// Format Currency
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+};
+
+// Preset Amount Quick Trigger
+function setDepositAmount(value) {
+    document.getElementById('deposit-amount').value = value;
+}
+
+// Fetch Savings Dynamic Data
 function fetchSavingsData() {
     fetch('/api/savings/')
         .then(res => res.json())
@@ -68,46 +243,91 @@ function fetchSavingsData() {
             tbody.innerHTML = '';
             
             if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No savings records found.</td></tr>';
-                document.getElementById('current-balance').innerText = 'Balance: ₹0.00';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3">
+                                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+                                </div>
+                                <p class="text-base font-bold text-slate-700 dark:text-slate-300">No passbook records found</p>
+                                <p class="text-xs text-slate-400 mt-1">Add your first deposit using the button above.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                document.getElementById('current-balance').innerText = '₹0.00';
+                document.getElementById('entry-count').innerText = '0';
+                if (window.lucide) lucide.createIcons();
                 return;
             }
 
-            // Update header balance with the latest transaction's running balance
-            document.getElementById('current-balance').innerText = `Balance: ₹${data[0].running_balance}`;
+            // Update stats
+            const latestBalance = data[0].running_balance || 0;
+            document.getElementById('current-balance').innerText = formatCurrency(latestBalance);
+            document.getElementById('entry-count').innerText = data.length;
+            
+            const liveIndicator = document.getElementById('live-indicator');
+            if(liveIndicator) {
+                liveIndicator.classList.remove('hidden');
+                liveIndicator.classList.add('inline-flex');
+            }
 
-            data.forEach(item => {
-                const isDeposit = item.transaction_type === 'deposit';
-                const typeBadge = isDeposit 
-                    ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Deposit</span>'
-                    : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400">Withdrawal</span>';
+            // Populate table rows dynamically
+            data.forEach((item, index) => {
+                const isDeposit = item.transaction_type && item.transaction_type.toLowerCase() === 'deposit';
                 
-                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+                const typeBadge = isDeposit 
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
+                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Deposit
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50 dark:border-rose-800/50">
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Withdrawal
+                       </span>`;
+                
+                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
                 const sign = isDeposit ? '+' : '-';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400">${item.date}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs md:text-sm">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                                ${item.date}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">${typeBadge}</td>
-                        <td class="px-6 py-4 text-right font-semibold ${amountColor}">${sign}₹${item.amount}</td>
-                        <td class="px-6 py-4 text-right font-bold text-slate-900 dark:text-white">₹${item.running_balance}</td>
+                        <td class="px-6 py-4 text-right font-bold tabular-nums ${amountColor}">
+                            ${sign}${formatCurrency(item.amount)}
+                        </td>
+                        <td class="px-6 py-4 text-right font-extrabold text-slate-900 dark:text-white tabular-nums">
+                            ${formatCurrency(item.running_balance)}
+                        </td>
                     </tr>`;
             });
+
+            if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
             console.error('Error fetching savings:', err);
-            document.getElementById('savings-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Failed to load savings ledger.</td></tr>';
+            document.getElementById('savings-tbody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-rose-500 font-bold">
+                        Failed to load savings ledger. Please refresh the page.
+                    </td>
+                </tr>`;
         });
 }
 
 function openDepositModal() {
-    document.getElementById('deposit-modal').classList.remove('hidden');
-    document.getElementById('deposit-modal').classList.add('flex');
+    const modal = document.getElementById('deposit-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function closeDepositModal() {
-    document.getElementById('deposit-modal').classList.remove('flex');
-    document.getElementById('deposit-modal').classList.add('hidden');
+    const modal = document.getElementById('deposit-modal');
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
 }
 
 function getCookie(name) {
@@ -126,13 +346,18 @@ function getCookie(name) {
 }
 
 async function paySavingsDeposit() {
-    const amount = document.getElementById('deposit-amount').value;
+    const amountInput = document.getElementById('deposit-amount');
+    const amount = amountInput.value;
+    
     if (!amount || amount <= 0) {
         alert('Please enter a valid deposit amount.');
         return;
     }
 
     const csrftoken = getCookie('csrftoken');
+    const payBtn = document.getElementById('pay-btn');
+    payBtn.disabled = true;
+    payBtn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Processing...`;
     
     try {
         const response = await fetch('/api/create-razorpay-order/', {
@@ -145,6 +370,12 @@ async function paySavingsDeposit() {
         });
         
         const orderData = await response.json();
+        
+        // Reset Button
+        payBtn.disabled = false;
+        payBtn.innerHTML = `<span>Proceed to Pay</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        if (window.lucide) lucide.createIcons();
+
         if (!response.ok) {
             alert(orderData.error || 'Failed to initiate payment.');
             return;
@@ -175,6 +406,7 @@ async function paySavingsDeposit() {
 
                 if (verifyRes.ok) {
                     alert('Savings deposit successful!');
+                    amountInput.value = '';
                     closeDepositModal();
                     fetchSavingsData();
                 } else {
@@ -188,6 +420,9 @@ async function paySavingsDeposit() {
         rzp.open();
     } catch (err) {
         console.error(err);
+        payBtn.disabled = false;
+        payBtn.innerHTML = `<span>Proceed to Pay</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        if (window.lucide) lucide.createIcons();
         alert('Something went wrong during payment initialization.');
     }
 }

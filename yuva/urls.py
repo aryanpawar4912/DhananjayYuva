@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/passbook/', views.PassbookAPI.as_view(), name='api_passbook'),
     path('api/profile/', views.ProfileAPI.as_view(), name='api_profile'),
     path('api/notifications/', views.NotificationsAPI.as_view(), name='api_notifications'),
+    path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('api/repayments/', views.RepaymentsAPI.as_view(), name='api_repayments'),
     path('api/upload-doc/', views.DocumentUploadAPI.as_view(), name='api_upload_doc'),
 

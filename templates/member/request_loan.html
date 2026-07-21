@@ -1,70 +1,226 @@
 {% extends 'member/base.html' %}
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">Request a Loan</h1>
-    
-    <!-- Status Message -->
-    <div id="alert-box" class="hidden mb-4 p-4 rounded-xl text-sm font-medium"></div>
 
-    <form id="loan-form" class="space-y-6">
-        {% csrf_token %}
-        
+<!-- Styles & Animations -->
+<style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(16px);
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="relative space-y-8 max-w-4xl mx-auto w-full z-10">
+
+    <!-- Header Section -->
+    <div class="fade-in-up flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Loan Amount (₹)</label>
-            <input type="number" id="loan-amount" required placeholder="e.g. 50000" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60">
+                <i data-lucide="calculator" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Loan Application</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Request a Loan
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                Submit a financing request and calculate estimated repayments before finalizing.
+            </p>
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tenure (Months)</label>
-            <select id="loan-tenure" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                <option value="6">6 Months</option>
-                <option value="12" selected>12 Months</option>
-                <option value="18">18 Months</option>
-                <option value="24">24 Months</option>
-            </select>
+            <a href="javascript:history.back()" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-2xl font-bold transition text-xs sm:text-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back to Loans</span>
+            </a>
         </div>
+    </div>
+
+    <!-- Alert Notification Box -->
+    <div id="alert-box" class="hidden fade-in-up p-4 rounded-2xl text-sm font-semibold flex items-center gap-3 transition-all"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        <button type="submit" id="submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition shadow-sm shadow-emerald-600/20">
-            Submit Application
-        </button>
-    </form>
+        <!-- Application Form Card -->
+        <div class="lg:col-span-7 fade-in-up bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+            <form id="loan-form" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Loan Amount Input -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Loan Amount (₹) <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="indian-rupee" class="w-5 h-5"></i>
+                        </div>
+                        <input type="number" id="loan-amount" required min="1000" step="500" placeholder="e.g. 50000" 
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-extrabold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-base">
+                    </div>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 font-medium">Enter the total sum you wish to borrow.</p>
+                </div>
+
+                <!-- Tenure Select Input -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Repayment Tenure <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                        </div>
+                        <select id="loan-tenure" class="w-full pl-11 pr-10 py-3.5 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition text-base appearance-none cursor-pointer">
+                            <option value="6">6 Months</option>
+                            <option value="12" selected>12 Months</option>
+                            <option value="18">18 Months</option>
+                            <option value="24">24 Months</option>
+                            <option value="36">36 Months</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit-btn" class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white font-extrabold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 text-sm sm:text-base">
+                    <i data-lucide="send" id="btn-icon" class="w-5 h-5"></i>
+                    <span id="btn-text">Submit Loan Application</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Live Estimate Summary Card -->
+        <div class="lg:col-span-5 fade-in-up space-y-4">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 sm:p-8 rounded-[2rem] border border-slate-700 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-between pb-6 border-b border-slate-700/80">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-white">Estimated Breakdown</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Live calculation based on standard rate</p>
+                    </div>
+                    <span class="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    </span>
+                </div>
+
+                <div class="space-y-4 py-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-400 font-medium">Principal Amount</span>
+                        <span id="preview-principal" class="text-sm font-bold text-white tabular-nums">₹0.00</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-400 font-medium">Selected Duration</span>
+                        <span id="preview-tenure" class="text-sm font-bold text-white">12 Months</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-400 font-medium">Est. Monthly Installment</span>
+                        <span id="preview-emi" class="text-base font-extrabold text-emerald-400 tabular-nums">₹0.00 / mo</span>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-start gap-3">
+                    <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                    <p class="text-[11px] text-slate-300 leading-relaxed">
+                        Actual interest charges and approval terms are subject to verification and review by the society administrators.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
-document.getElementById('loan-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const amount = document.getElementById('loan-amount').value;
-    const tenureMonths = document.getElementById('loan-tenure').value;
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const btn = document.getElementById('submit-btn');
-    const alertBox = document.getElementById('alert-box');
-    
-    btn.innerText = 'Submitting...';
-    btn.disabled = true;
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) {
+        lucide.createIcons();
+    }
 
-    fetch('/api/loans/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ amount: amount, tenure_months: tenureMonths })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alertBox.className = "mb-4 p-4 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 block";
-        alertBox.innerText = data.message || "Loan application submitted successfully.";
-        document.getElementById('loan-form').reset();
-        btn.innerText = 'Submit Application';
-        btn.disabled = false;
-    })
-    .catch(err => {
-        console.error("Loan Request Error:", err);
-        alertBox.className = "mb-4 p-4 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 block";
-        alertBox.innerText = 'An error occurred. Please try again.';
-        btn.innerText = 'Submit Application';
-        btn.disabled = false;
+    const loanAmountInput = document.getElementById('loan-amount');
+    const loanTenureSelect = document.getElementById('loan-tenure');
+    
+    // Live Estimate Calculation
+    function updateEstimate() {
+        const amount = parseFloat(loanAmountInput.value) || 0;
+        const tenure = parseInt(loanTenureSelect.value) || 12;
+        
+        document.getElementById('preview-principal').innerText = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('preview-tenure').innerText = tenure + ' Months';
+        
+        if (amount > 0 && tenure > 0) {
+            // Basic estimation preview logic (Approximate EMI calculator)
+            const approxEmi = amount / tenure;
+            document.getElementById('preview-emi').innerText = '≈ ₹' + Math.round(approxEmi).toLocaleString('en-IN') + ' / mo';
+        } else {
+            document.getElementById('preview-emi').innerText = '₹0.00 / mo';
+        }
+    }
+
+    loanAmountInput.addEventListener('input', updateEstimate);
+    loanTenureSelect.addEventListener('change', updateEstimate);
+
+    // Form Submission
+    document.getElementById('loan-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const amount = loanAmountInput.value;
+        const tenureMonths = loanTenureSelect.value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const btn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnIcon = document.getElementById('btn-icon');
+        const alertBox = document.getElementById('alert-box');
+        
+        // Processing UI State
+        btnText.innerText = 'Submitting Application...';
+        btnIcon.setAttribute('data-lucide', 'loader-2');
+        btnIcon.classList.add('animate-spin');
+        btn.disabled = true;
+        if (window.lucide) lucide.createIcons();
+
+        fetch('/api/loans/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ amount: amount, tenure_months: tenureMonths })
+        })
+        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(res => {
+            if (res.status >= 200 && res.status < 300) {
+                alertBox.className = "fade-in-up mb-4 p-4 rounded-2xl text-sm font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 block";
+                alertBox.innerHTML = `
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                    <span>${res.body.message || "Loan application submitted successfully."}</span>
+                `;
+                document.getElementById('loan-form').reset();
+                updateEstimate();
+            } else {
+                throw new Error(res.body.error || res.body.message || 'An error occurred while processing your request.');
+            }
+        })
+        .catch(err => {
+            console.error("Loan Request Error:", err);
+            alertBox.className = "fade-in-up mb-4 p-4 rounded-2xl text-sm font-semibold bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 flex items-center gap-3 block";
+            alertBox.innerHTML = `
+                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0"></i>
+                <span>${err.message || 'An error occurred. Please try again.'}</span>
+            `;
+        })
+        .finally(() => {
+            btnText.innerText = 'Submit Loan Application';
+            btnIcon.setAttribute('data-lucide', 'send');
+            btnIcon.classList.remove('animate-spin');
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        });
     });
 });
 </script>
