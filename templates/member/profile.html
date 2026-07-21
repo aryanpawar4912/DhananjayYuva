@@ -1,66 +1,103 @@
 {% extends 'member/base.html' %}
 {% block content %}
-<div class="max-w-3xl mx-auto space-y-8">
-    <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Account Settings</h1>
+<div class="max-w-3xl mx-auto space-y-8 px-4 sm:px-0 py-6 transition-all duration-300">
     
-    <!-- Profile Info Form -->
-    <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+    <!-- Header Title Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Account Settings</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your personal preferences, contact info, and role details.</p>
+        </div>
+    </div>
+    
+    <!-- Main Form Container Card -->
+    <div class="bg-white dark:bg-slate-900/90 backdrop-blur-xl p-6 sm:p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 transition-all duration-300">
         
-        <!-- Avatar Header Section -->
+        <!-- Avatar Header Section with Pulse Animation -->
         <div class="flex items-center gap-5 mb-8 pb-6 border-b border-slate-100 dark:border-slate-800">
-            <div id="avatar-container" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-2xl flex items-center justify-center shadow-lg shadow-emerald-600/30 transform transition-transform hover:scale-105 select-none">
-                <span id="avatar-initial">--</span>
+            <div class="relative group">
+                <div id="avatar-container" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 text-white font-bold text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-emerald-600/30 transform transition-all duration-300 group-hover:scale-105 group-hover:rotate-1 select-none">
+                    <span id="avatar-initial">--</span>
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"></div>
             </div>
             <div>
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Personal Details</h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your profile information and contact details</p>
+                <h2 class="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Profile Information</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Updates reflect securely across the network ledger</p>
             </div>
         </div>
 
         <form id="profile-form" class="space-y-6">
             {% csrf_token %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Username</label>
-                    <input type="text" id="prof-username" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed" disabled>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                
+                <!-- Username (Read-only) -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Username <span class="text-slate-400 font-normal">(Fixed)</span></label>
+                    <input type="text" id="prof-username" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-400 dark:text-slate-500 cursor-not-allowed select-none text-sm" disabled>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
-                    <input type="text" id="prof-name" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                
+                <!-- Full Name -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+                    <input type="text" id="prof-name" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="Enter your full name">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
-                    <input type="email" id="prof-email" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+
+                <!-- Email Address -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
+                    <input type="email" id="prof-email" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="name@example.com">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
-                    <input type="text" id="prof-phone" class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+
+                <!-- Phone Number -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Phone Number</label>
+                    <input type="text" id="prof-phone" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="10-digit mobile number">
+                </div>
+
+                <!-- Village -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Village</label>
+                    <input type="text" id="prof-village" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm" placeholder="Enter village name">
+                </div>
+
+                <!-- Role Dropdown Selection -->
+                <div class="space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Account Role</label>
+                    <div class="relative">
+                        <select id="prof-role" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm appearance-none cursor-pointer">
+                            <option value="member">Member</option>
+                            <option value="user">User</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Address (Span full row width) -->
+                <div class="sm:col-span-2 space-y-2">
+                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Residential Address</label>
+                    <textarea id="prof-address" rows="2" class="w-full px-4 py-3 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all duration-200 text-sm shadow-sm resize-none" placeholder="Enter full address"></textarea>
                 </div>
             </div>
             
-            <button type="submit" id="save-prof-btn" class="bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-emerald-700 transition shadow-sm shadow-emerald-600/20">Save Changes</button>
-            <div id="prof-msg" class="mt-4 text-sm font-medium hidden"></div>
+            <!-- Save Button and Response Feedback Msg -->
+            <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <button type="submit" id="save-prof-btn" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 px-8 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Save Changes</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+            </div>
+            <div id="prof-msg" class="mt-4 text-sm font-medium hidden transition-all duration-300"></div>
         </form>
-    </div>
-
-    <!-- KYC Document Upload -->
-    <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-2">KYC Document Upload</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Upload an official document (PAN, or Salary Slip) for verification purposes.</p>
-        
-        <form id="upload-form" class="flex flex-col sm:flex-row gap-4 items-center bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
-            {% csrf_token %}
-            <input type="file" id="doc-file" class="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0 file:bg-white dark:file:bg-slate-800 file:border file:border-slate-200 dark:file:border-slate-700 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer transition" required>
-            <button type="submit" id="upload-btn" class="w-full sm:w-auto bg-slate-900 dark:bg-slate-800 text-white font-medium px-8 py-2.5 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition shadow-sm">Upload File</button>
-        </form>
-        <div id="upload-status" class="mt-4 text-sm font-medium hidden"></div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Helper function to update avatar initial letter dynamically
+    // Dynamic avatar initial setter
     const updateAvatarInitial = (name) => {
         const initialSpan = document.getElementById('avatar-initial');
         if (name && name.trim().length > 0) {
@@ -70,12 +107,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Live update avatar when typing in the Full Name field
+    // Real-time live update for avatar initial letter when typing full name
     document.getElementById('prof-name').addEventListener('input', function(e) {
         updateAvatarInitial(e.target.value);
     });
 
-    // 1. Fetch Existing Profile Data
+    // 1. Fetch Profile Data on Page Load
     fetch('/api/profile/')
         .then(res => res.json())
         .then(data => {
@@ -84,20 +121,23 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('prof-name').value = name;
             document.getElementById('prof-email').value = data.email || '';
             document.getElementById('prof-phone').value = data.phone || '';
+            document.getElementById('prof-village').value = data.village || '';
+            document.getElementById('prof-role').value = data.role || 'member';
+            document.getElementById('prof-address').value = data.address || '';
             
-            // Set Avatar initial from fetched data
             updateAvatarInitial(name);
         })
-        .catch(err => console.error("Error fetching profile:", err));
+        .catch(err => console.error("Error fetching profile details:", err));
 
-    // 2. Handle Saving Profile Changes (JSON Post)
+    // 2. Handle Submitting and Saving Profile Data
     document.getElementById('profile-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const csrfToken = document.querySelector('#profile-form [name=csrfmiddlewaretoken]').value;
         const msgBox = document.getElementById('prof-msg');
         const btn = document.getElementById('save-prof-btn');
         
-        btn.innerText = "Saving...";
+        // Show loading spinner inside button
+        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
         btn.disabled = true;
         
         const currentName = document.getElementById('prof-name').value;
@@ -111,66 +151,31 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 name: currentName,
                 email: document.getElementById('prof-email').value,
-                phone: document.getElementById('prof-phone').value
+                phone: document.getElementById('prof-phone').value,
+                village: document.getElementById('prof-village').value,
+                role: document.getElementById('prof-role').value,
+                address: document.getElementById('prof-address').value
             })
         })
         .then(res => res.json())
         .then(data => {
-            btn.innerText = "Save Changes";
+            btn.innerHTML = `<span>Save Changes</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
             btn.disabled = false;
             msgBox.innerText = data.message || "Profile updated successfully.";
-            msgBox.className = "mt-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-sm font-medium text-emerald-700 dark:text-emerald-300 block";
+            msgBox.className = "mt-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl text-sm font-medium text-emerald-700 dark:text-emerald-300 block shadow-sm transition-all";
             updateAvatarInitial(currentName);
+
+            // Auto-hide success message after 4 seconds
+            setTimeout(() => {
+                msgBox.classList.add('opacity-0');
+                setTimeout(() => msgBox.classList.add('hidden'), 300);
+            }, 4000);
         })
         .catch(() => {
-            btn.innerText = "Save Changes";
+            btn.innerHTML = `<span>Save Changes</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
             btn.disabled = false;
-            msgBox.innerText = "Failed to update profile.";
-            msgBox.className = "mt-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-sm font-medium text-red-700 dark:text-red-300 block";
-        });
-    });
-
-    // 3. Handle File Uploads (FormData Post)
-    document.getElementById('upload-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const csrfToken = document.querySelector('#upload-form [name=csrfmiddlewaretoken]').value;
-        const fileInput = document.getElementById('doc-file');
-        const btn = document.getElementById('upload-btn');
-        const statusBox = document.getElementById('upload-status');
-        
-        if (fileInput.files.length === 0) return;
-
-        btn.innerText = "Uploading...";
-        btn.disabled = true;
-        
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        formData.append('description', 'User KYC Document');
-
-        fetch('/api/upload-doc/', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }, 
-            body: formData 
-        })
-        .then(res => res.json())
-        .then(data => {
-            btn.innerText = "Upload File";
-            btn.disabled = false;
-            
-            if(data.message) {
-                statusBox.innerText = data.message;
-                statusBox.className = "mt-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-sm font-medium text-emerald-700 dark:text-emerald-300 block";
-                fileInput.value = '';
-            } else {
-                statusBox.innerText = data.error || "An error occurred.";
-                statusBox.className = "mt-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-sm font-medium text-red-700 dark:text-red-300 block";
-            }
-        })
-        .catch(() => {
-            btn.innerText = "Upload File";
-            btn.disabled = false;
-            statusBox.innerText = "Server error uploading file.";
-            statusBox.className = "mt-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-sm font-medium text-red-700 dark:text-red-300 block";
+            msgBox.innerText = "Failed to update profile. Please try again.";
+            msgBox.className = "mt-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-sm font-medium text-red-700 dark:text-red-300 block shadow-sm";
         });
     });
 });

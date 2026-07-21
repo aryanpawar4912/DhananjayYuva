@@ -1,19 +1,23 @@
 from decimal import Decimal
-
+import razorpay
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from .models import Member, Notification, Repayment, SavingsTransaction, Loan, Document
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Member, Notification, Repayment, SavingsTransaction, Loan, Document, LoanInstallment
 from .forms import LoginForm, MemberRegistrationForm
 
 # ==========================================
-# 0. AUTHENTICATION VIEWS
+# 0. AUTHENTICATION & RBAC HELPERS
 # ==========================================
+def is_admin(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -71,6 +75,10 @@ def member_profile(request):
 @login_required
 def request_loan(request): 
     return render(request, 'member/request_loan.html')
+
+@login_required(login_url='login')
+def member_passbook_view(request):
+    return render(request, 'member/passbook.html')
 
 
 # ==========================================
@@ -223,7 +231,9 @@ class ProfileAPI(APIView):
         return Response({
             'name': full_name,
             'phone': member.phone,
+            'village': member.village,
             'address': member.address,
+            'role': member.role,
             'email': request.user.email,
             'username': request.user.username
         })
@@ -241,7 +251,9 @@ class ProfileAPI(APIView):
             request.user.save()
             
         member.phone = request.data.get('phone', member.phone)
+        member.village = request.data.get('village', member.village)
         member.address = request.data.get('address', member.address)
+        member.role = request.data.get('role', member.role)
         member.save()
         
         email = request.data.get('email')
@@ -288,9 +300,6 @@ class DocumentUploadAPI(APIView):
             return Response({'message': 'Document uploaded successfully!'}, status=201)
         return Response({'error': 'No file provided'}, status=400)
 
-@login_required(login_url='login')
-def member_passbook_view(request):
-    return render(request, 'member/passbook.html')
 
 class PassbookAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -339,28 +348,7 @@ class PassbookAPI(APIView):
             })
 
         return Response(list(reversed(data)))
-    
 
-import razorpay
-from django.conf import settings
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework import status
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Member, Notification, Repayment, SavingsTransaction, Loan, Document, LoanInstallment
-
-# ==========================================
-# 0. AUTHENTICATION & RBAC HELPERS
-# ==========================================
-def is_admin(user):
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
-
-# ==========================================
-# 1. API VIEWS (Includes Razorpay & RBAC)
-# ==========================================
 
 class AdminLoanManagementAPI(APIView):
     """RBAC Protected: Only admins can view and manage all member loans."""
