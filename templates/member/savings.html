@@ -55,14 +55,14 @@
             </div>
             <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
                 Savings Details
-                <span class="float text-2xl">📖</span>
+                <span class="float text-2xl" role="img" aria-label="Passbook">📖</span>
             </h1>
             <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-2 font-medium">
                 Track your deposits, withdrawals, and real-time running balances seamlessly.
             </p>
         </div>
 
-        <button onclick="openDepositModal()" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 text-sm">
+        <button onclick="openDepositModal()" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 transition-all transform active:scale-95 text-sm cursor-pointer">
             <i data-lucide="plus-circle" class="w-5 h-5"></i>
             <span>Add Online Savings</span>
         </button>
@@ -115,7 +115,7 @@
                 </div>
                 <p class="text-sm text-slate-300 mt-2 font-medium">Add funds directly using UPI, Cards, or NetBanking.</p>
             </div>
-            <button onclick="openDepositModal()" class="mt-4 text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 group">
+            <button onclick="openDepositModal()" class="mt-4 text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 group cursor-pointer w-fit">
                 Deposit Now <i data-lucide="arrow-right" class="w-4 h-4 transition-transform group-hover:translate-x-1"></i>
             </button>
         </div>
@@ -162,7 +162,7 @@
 </div>
 
 <!-- Modernized Deposit Modal -->
-<div id="deposit-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-all">
+<div id="deposit-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-200" onclick="handleBackdropClick(event)">
     <div class="bg-white dark:bg-slate-900 max-w-md w-full p-6 sm:p-8 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-2xl space-y-6 relative overflow-hidden transform transition-all scale-100">
         
         <!-- Top Accent Glow -->
@@ -173,14 +173,14 @@
                 <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">Add Savings Deposit</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter the deposit amount to process securely via Razorpay.</p>
             </div>
-            <button onclick="closeDepositModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl bg-slate-100 dark:bg-slate-800 transition">
+            <button onclick="closeDepositModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl bg-slate-100 dark:bg-slate-800 transition cursor-pointer" aria-label="Close modal">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
 
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Deposit Amount</label>
+                <label for="deposit-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Deposit Amount</label>
                 <div class="relative flex items-center">
                     <span class="absolute left-4 text-xl font-bold text-slate-400 dark:text-slate-500">₹</span>
                     <input type="number" id="deposit-amount" placeholder="e.g. 1000" min="1" class="w-full pl-9 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 text-lg font-bold transition tabular-nums">
@@ -191,19 +191,19 @@
             <div>
                 <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Select</span>
                 <div class="grid grid-cols-4 gap-2 mt-2">
-                    <button type="button" onclick="setDepositAmount(500)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹500</button>
-                    <button type="button" onclick="setDepositAmount(1000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹1,000</button>
-                    <button type="button" onclick="setDepositAmount(2000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹2,000</button>
-                    <button type="button" onclick="setDepositAmount(5000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50">+₹5,000</button>
+                    <button type="button" onclick="setDepositAmount(500)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50 cursor-pointer">+₹500</button>
+                    <button type="button" onclick="setDepositAmount(1000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50 cursor-pointer">+₹1,000</button>
+                    <button type="button" onclick="setDepositAmount(2000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50 cursor-pointer">+₹2,000</button>
+                    <button type="button" onclick="setDepositAmount(5000)" class="py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-emerald-500 hover:text-white transition active:scale-95 border border-slate-200/50 dark:border-slate-700/50 cursor-pointer">+₹5,000</button>
                 </div>
             </div>
         </div>
 
         <div class="flex gap-3 pt-2">
-            <button onclick="closeDepositModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3.5 rounded-2xl text-sm transition">
+            <button onclick="closeDepositModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3.5 rounded-2xl text-sm transition cursor-pointer">
                 Cancel
             </button>
-            <button id="pay-btn" onclick="paySavingsDeposit()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+            <button id="pay-btn" onclick="paySavingsDeposit()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-2xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer">
                 <span>Proceed to Pay</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
@@ -213,123 +213,39 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    initLucide();
+    fetchSavingsData();
+
+    // Close modal on Escape key press
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDepositModal();
+    });
+});
+
+function initLucide() {
     if (window.lucide) {
         lucide.createIcons();
     }
-    fetchSavingsData();
-});
+}
 
-// Format Currency
+// Currency Formatter
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }).format(amount);
+    }).format(amount || 0);
 };
 
 // Preset Amount Quick Trigger
 function setDepositAmount(value) {
-    document.getElementById('deposit-amount').value = value;
+    const input = document.getElementById('deposit-amount');
+    input.value = value;
+    input.focus();
 }
 
-// Fetch Savings Dynamic Data
-function fetchSavingsData() {
-    fetch('/api/savings/')
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.getElementById('savings-tbody');
-            tbody.innerHTML = '';
-            
-            if(!data || data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="px-6 py-12 text-center">
-                            <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
-                                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3">
-                                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
-                                </div>
-                                <p class="text-base font-bold text-slate-700 dark:text-slate-300">No passbook records found</p>
-                                <p class="text-xs text-slate-400 mt-1">Add your first deposit using the button above.</p>
-                            </div>
-                        </td>
-                    </tr>`;
-                document.getElementById('current-balance').innerText = '₹0.00';
-                document.getElementById('entry-count').innerText = '0';
-                if (window.lucide) lucide.createIcons();
-                return;
-            }
-
-            // Update stats
-            const latestBalance = data[0].running_balance || 0;
-            document.getElementById('current-balance').innerText = formatCurrency(latestBalance);
-            document.getElementById('entry-count').innerText = data.length;
-            
-            const liveIndicator = document.getElementById('live-indicator');
-            if(liveIndicator) {
-                liveIndicator.classList.remove('hidden');
-                liveIndicator.classList.add('inline-flex');
-            }
-
-            // Populate table rows dynamically
-            data.forEach((item, index) => {
-                const isDeposit = item.transaction_type && item.transaction_type.toLowerCase() === 'deposit';
-                
-                const typeBadge = isDeposit 
-                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
-                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Deposit
-                       </span>`
-                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50 dark:border-rose-800/50">
-                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Withdrawal
-                       </span>`;
-                
-                const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
-                const sign = isDeposit ? '+' : '-';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
-                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs md:text-sm">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
-                                ${item.date}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">${typeBadge}</td>
-                        <td class="px-6 py-4 text-right font-bold tabular-nums ${amountColor}">
-                            ${sign}${formatCurrency(item.amount)}
-                        </td>
-                        <td class="px-6 py-4 text-right font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            ${formatCurrency(item.running_balance)}
-                        </td>
-                    </tr>`;
-            });
-
-            if (window.lucide) lucide.createIcons();
-        })
-        .catch(err => {
-            console.error('Error fetching savings:', err);
-            document.getElementById('savings-tbody').innerHTML = `
-                <tr>
-                    <td colspan="4" class="px-6 py-8 text-center text-rose-500 font-bold">
-                        Failed to load savings ledger. Please refresh the page.
-                    </td>
-                </tr>`;
-        });
-}
-
-function openDepositModal() {
-    const modal = document.getElementById('deposit-modal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closeDepositModal() {
-    const modal = document.getElementById('deposit-modal');
-    modal.classList.remove('flex');
-    modal.classList.add('hidden');
-}
-
+// Safely retrieve CSRF token
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -345,6 +261,147 @@ function getCookie(name) {
     return cookieValue;
 }
 
+// Fetch Savings Dynamic Data
+async function fetchSavingsData() {
+    const tbody = document.getElementById('savings-tbody');
+    try {
+        const res = await fetch('/api/savings/');
+        if (!res.ok) throw new Error('Network response was not ok');
+        
+        const data = await res.json();
+        tbody.innerHTML = '';
+        
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3">
+                                <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+                            </div>
+                            <p class="text-base font-bold text-slate-700 dark:text-slate-300">No passbook records found</p>
+                            <p class="text-xs text-slate-400 mt-1">Add your first deposit using the button above.</p>
+                        </div>
+                    </td>
+                </tr>`;
+            document.getElementById('current-balance').innerText = '₹0.00';
+            document.getElementById('entry-count').innerText = '0';
+            initLucide();
+            return;
+        }
+
+        // Update Stats
+        const latestBalance = data[0].running_balance || 0;
+        document.getElementById('current-balance').innerText = formatCurrency(latestBalance);
+        document.getElementById('entry-count').innerText = data.length;
+        
+        const liveIndicator = document.getElementById('live-indicator');
+        if (liveIndicator) {
+            liveIndicator.classList.remove('hidden');
+            liveIndicator.classList.add('inline-flex');
+        }
+
+        // Build HTML in memory (Single DOM Mutation)
+        let rowsHTML = '';
+        data.forEach((item) => {
+            const isDeposit = item.transaction_type && item.transaction_type.toLowerCase() === 'deposit';
+            
+            const typeBadge = isDeposit 
+                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
+                    <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Deposit
+                   </span>`
+                : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50 dark:border-rose-800/50">
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Withdrawal
+                   </span>`;
+            
+            const amountColor = isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+            const sign = isDeposit ? '+' : '-';
+
+            rowsHTML += `
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                    <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs md:text-sm">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                            ${escapeHtml(item.date)}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">${typeBadge}</td>
+                    <td class="px-6 py-4 text-right font-bold tabular-nums ${amountColor}">
+                        ${sign}${formatCurrency(item.amount)}
+                    </td>
+                    <td class="px-6 py-4 text-right font-extrabold text-slate-900 dark:text-white tabular-nums">
+                        ${formatCurrency(item.running_balance)}
+                    </td>
+                </tr>`;
+        });
+
+        tbody.innerHTML = rowsHTML;
+        initLucide();
+
+    } catch (err) {
+        console.error('Error fetching savings:', err);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-8 text-center text-rose-500 font-bold">
+                    Failed to load savings ledger. Please refresh the page.
+                </td>
+            </tr>`;
+    }
+}
+
+// Basic HTML Escaping helper
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Modal Handlers
+function openDepositModal() {
+    const modal = document.getElementById('deposit-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    
+    // Auto-focus input
+    setTimeout(() => {
+        const input = document.getElementById('deposit-amount');
+        if (input) input.focus();
+    }, 100);
+}
+
+function closeDepositModal() {
+    const modal = document.getElementById('deposit-modal');
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    document.body.style.overflow = ''; // Restore scroll
+}
+
+function handleBackdropClick(event) {
+    if (event.target.id === 'deposit-modal') {
+        closeDepositModal();
+    }
+}
+
+// Pay Button Helper
+function setPayButtonLoading(isLoading) {
+    const payBtn = document.getElementById('pay-btn');
+    if (!payBtn) return;
+
+    payBtn.disabled = isLoading;
+    if (isLoading) {
+        payBtn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Processing...`;
+    } else {
+        payBtn.innerHTML = `<span>Proceed to Pay</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        initLucide();
+    }
+}
+
+// Payment Trigger
 async function paySavingsDeposit() {
     const amountInput = document.getElementById('deposit-amount');
     const amount = amountInput.value;
@@ -355,9 +412,7 @@ async function paySavingsDeposit() {
     }
 
     const csrftoken = getCookie('csrftoken');
-    const payBtn = document.getElementById('pay-btn');
-    payBtn.disabled = true;
-    payBtn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Processing...`;
+    setPayButtonLoading(true);
     
     try {
         const response = await fetch('/api/create-razorpay-order/', {
@@ -370,13 +425,9 @@ async function paySavingsDeposit() {
         });
         
         const orderData = await response.json();
-        
-        // Reset Button
-        payBtn.disabled = false;
-        payBtn.innerHTML = `<span>Proceed to Pay</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-        if (window.lucide) lucide.createIcons();
 
         if (!response.ok) {
+            setPayButtonLoading(false);
             alert(orderData.error || 'Failed to initiate payment.');
             return;
         }
@@ -388,41 +439,59 @@ async function paySavingsDeposit() {
             "name": "DhananjayYuva",
             "description": "Savings Account Deposit",
             "order_id": orderData.order_id,
-            "handler": async function (response) {
-                const verifyRes = await fetch('/api/verify-razorpay-payment/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_signature: response.razorpay_signature,
-                        type: 'savings',
-                        amount: amount
-                    })
-                });
+            "handler": async function (razorpayResponse) {
+                try {
+                    const verifyRes = await fetch('/api/verify-razorpay-payment/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({
+                            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                            razorpay_order_id: razorpayResponse.razorpay_order_id,
+                            razorpay_signature: razorpayResponse.razorpay_signature,
+                            type: 'savings',
+                            amount: amount
+                        })
+                    });
 
-                if (verifyRes.ok) {
-                    alert('Savings deposit successful!');
-                    amountInput.value = '';
-                    closeDepositModal();
-                    fetchSavingsData();
-                } else {
-                    alert('Payment verification failed.');
+                    if (verifyRes.ok) {
+                        alert('Savings deposit successful!');
+                        amountInput.value = '';
+                        closeDepositModal();
+                        fetchSavingsData();
+                    } else {
+                        alert('Payment verification failed.');
+                    }
+                } catch (verifyErr) {
+                    console.error('Verification Error:', verifyErr);
+                    alert('An error occurred while verifying the payment.');
+                } finally {
+                    setPayButtonLoading(false);
+                }
+            },
+            "modal": {
+                "ondismiss": function() {
+                    setPayButtonLoading(false);
                 }
             },
             "theme": { "color": "#10b981" }
         };
         
         const rzp = new Razorpay(options);
+
+        // Handle failure state
+        rzp.on('payment.failed', function (response) {
+            setPayButtonLoading(false);
+            alert(`Payment failed: ${response.error.description}`);
+        });
+
         rzp.open();
+
     } catch (err) {
-        console.error(err);
-        payBtn.disabled = false;
-        payBtn.innerHTML = `<span>Proceed to Pay</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-        if (window.lucide) lucide.createIcons();
+        console.error('Order Creation Error:', err);
+        setPayButtonLoading(false);
         alert('Something went wrong during payment initialization.');
     }
 }

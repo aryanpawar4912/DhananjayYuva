@@ -32,7 +32,7 @@
         </div>
 
         <div>
-            <a href="javascript:history.back()" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-2xl font-bold transition text-xs sm:text-sm">
+            <a href="{% url 'loans' %}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-2xl font-bold transition text-xs sm:text-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span>Back to Loans</span>
             </a>
@@ -102,7 +102,7 @@
                 <div class="flex items-center justify-between pb-6 border-b border-slate-700/80">
                     <div>
                         <h3 class="text-lg font-extrabold text-white">Estimated Breakdown</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Live calculation based on standard rate</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Live calculation based on 1% monthly interest</p>
                     </div>
                     <span class="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl">
                         <i data-lucide="trending-up" class="w-5 h-5"></i>
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loanAmountInput = document.getElementById('loan-amount');
     const loanTenureSelect = document.getElementById('loan-tenure');
     
-    // Live Estimate Calculation
+    // Live Estimate Calculation matching backend logic
     function updateEstimate() {
         const amount = parseFloat(loanAmountInput.value) || 0;
         const tenure = parseInt(loanTenureSelect.value) || 12;
@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('preview-tenure').innerText = tenure + ' Months';
         
         if (amount > 0 && tenure > 0) {
-            // Basic estimation preview logic (Approximate EMI calculator)
-            const approxEmi = amount / tenure;
+            // Backend calculation: Principal/month + 1% of total principal/month
+            const approxEmi = (amount / tenure) + (amount * 0.01);
             document.getElementById('preview-emi').innerText = '≈ ₹' + Math.round(approxEmi).toLocaleString('en-IN') + ' / mo';
         } else {
             document.getElementById('preview-emi').innerText = '₹0.00 / mo';
@@ -198,10 +198,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 alertBox.className = "fade-in-up mb-4 p-4 rounded-2xl text-sm font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 block";
                 alertBox.innerHTML = `
                     <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
-                    <span>${res.body.message || "Loan application submitted successfully."}</span>
+                    <span>${res.body.message || "Loan application submitted successfully. Redirecting..."}</span>
                 `;
                 document.getElementById('loan-form').reset();
                 updateEstimate();
+
+                // Redirect user to the loans dashboard so they can see their new pending loan!
+                setTimeout(() => {
+                    window.location.href = "{% url 'loans' %}";
+                }, 2000);
+
             } else {
                 throw new Error(res.body.error || res.body.message || 'An error occurred while processing your request.');
             }

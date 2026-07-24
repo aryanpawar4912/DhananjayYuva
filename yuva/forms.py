@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import User
+
 from .models import Member, Loan
+
+User = get_user_model()
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -25,7 +27,6 @@ class LoginForm(AuthenticationForm):
         password = self.cleaned_data.get('password')
 
         if username and password:
-            User = get_user_model()
             self.user_cache = None
 
             # If the user typed an email, safely check all accounts sharing this email to prevent login failures
@@ -50,6 +51,7 @@ class LoginForm(AuthenticationForm):
 
         return self.cleaned_data
 
+
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Member
@@ -66,6 +68,7 @@ class ProfileUpdateForm(forms.ModelForm):
             }),
         }
 
+
 class LoanRequestForm(forms.ModelForm):
     class Meta:
         model = Loan
@@ -81,15 +84,27 @@ class LoanRequestForm(forms.ModelForm):
             }),
         }
 
+
 class MemberRegistrationForm(UserCreationForm):
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'placeholder': 'name@example.com'}))
+    email = forms.EmailField(
+        required=True, 
+        widget=forms.EmailInput(attrs={'placeholder': 'name@example.com'})
+    )
     
     class Meta:
         model = User
         fields = ['username', 'email']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Automatically apply consistent Tailwind styling to all generated fields (including passwords)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none'
+            })
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email address already exists.")
         return email

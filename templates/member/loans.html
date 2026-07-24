@@ -2,7 +2,7 @@
 {% block content %}
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<!-- Styles & Entrance Animations -->
+<!-- Custom Styles & Entrance Animations -->
 <style>
     .fade-in-up {
         opacity: 0;
@@ -18,7 +18,10 @@
     }
 </style>
 
-<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10">
+<!-- Notification Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10 pb-12">
     
     <!-- Page Header -->
     <div class="fade-in-up flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -43,37 +46,37 @@
         </div>
     </div>
 
-    <!-- Quick Stats Cards Summary -->
+    <!-- Quick Stats Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="fade-in-up delay-100 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div class="fade-in-up delay-100 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Active Accounts</span>
                 <h3 id="stat-active-loans" class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1 tabular-nums">0</h3>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Total Loan Applications</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Total Applications</p>
             </div>
-            <div class="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+            <div class="p-3.5 bg-indigo-100/80 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
                 <i data-lucide="landmark" class="w-6 h-6"></i>
             </div>
         </div>
 
-        <div class="fade-in-up delay-200 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div class="fade-in-up delay-200 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Borrowed</span>
                 <h3 id="stat-total-borrowed" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">₹0.00</h3>
                 <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Approved Principal Sum</p>
             </div>
-            <div class="p-3 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <div class="p-3.5 bg-emerald-100/80 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
                 <i data-lucide="wallet" class="w-6 h-6"></i>
             </div>
         </div>
 
-        <div class="fade-in-up delay-300 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Repaid</span>
                 <h3 id="stat-total-repaid" class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">₹0.00</h3>
                 <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Cleared Repayment Amount</p>
             </div>
-            <div class="p-3 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+            <div class="p-3.5 bg-blue-100/80 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl">
                 <i data-lucide="check-circle-2" class="w-6 h-6"></i>
             </div>
         </div>
@@ -138,18 +141,71 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    if (window.lucide) {
-        lucide.createIcons();
+// --- Helper Functions ---
+function formatINR(amount) {
+    const numericValue = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+    }).format(numericValue);
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
     }
+    return cookieValue;
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const bgClass = type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white';
+    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+
+    toast.className = `pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl text-sm font-semibold transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+    toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 shrink-0"></i> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+    if (window.lucide) lucide.createIcons({ targets: [toast] });
+
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+    });
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// --- Main Logic ---
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) lucide.createIcons();
 
     // 1. Fetch Loans & Schedules Data
     fetch('/api/loans/')
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
         .then(data => {
             const container = document.getElementById('loans-container');
-            container.innerHTML = '';
             
             if (!data || data.length === 0) {
                 container.innerHTML = `
@@ -167,14 +223,14 @@ document.addEventListener('DOMContentLoaded', function() {
             let totalBorrowedSum = 0;
             document.getElementById('stat-active-loans').innerText = data.length;
 
-            data.forEach(loan => {
+            const loansCardsHtml = data.map(loan => {
                 let badgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
                 let iconName = 'clock';
                 const status = loan.status ? loan.status.toLowerCase() : 'pending';
                 
                 if (status === 'approved' || status === 'completed') {
                     badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60';
-                    iconName = 'check-circle';
+                    iconName = status === 'completed' ? 'check-circle-2' : 'check-circle';
                     totalBorrowedSum += parseFloat(loan.amount) || 0;
                 } else if (status === 'pending') {
                     badgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60';
@@ -186,13 +242,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 let installmentsHtml = '';
                 if (loan.installments && loan.installments.length > 0) {
-                    let rows = loan.installments.map(inst => `
+                    const rowsHtml = loan.installments.map(inst => `
                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors text-slate-700 dark:text-slate-300">
                             <td class="p-3.5 font-bold text-slate-900 dark:text-slate-100">#${inst.installment_number}</td>
                             <td class="p-3.5 font-medium text-slate-500 dark:text-slate-400">${inst.due_date}</td>
-                            <td class="p-3.5 font-medium tabular-nums">₹${Number(inst.principal_amount).toLocaleString('en-IN')}</td>
-                            <td class="p-3.5 font-medium tabular-nums">₹${Number(inst.interest_amount).toLocaleString('en-IN')}</td>
-                            <td class="p-3.5 font-extrabold text-slate-900 dark:text-white tabular-nums">₹${Number(inst.total_amount).toLocaleString('en-IN')}</td>
+                            <td class="p-3.5 font-medium tabular-nums">${formatINR(inst.principal_amount)}</td>
+                            <td class="p-3.5 font-medium tabular-nums">${formatINR(inst.interest_amount)}</td>
+                            <td class="p-3.5 font-extrabold text-slate-900 dark:text-white tabular-nums">${formatINR(inst.total_amount)}</td>
                             <td class="p-3.5">
                                 ${inst.is_paid 
                                     ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
@@ -223,15 +279,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        ${rows}
+                                        ${rowsHtml}
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
-                container.innerHTML += `
+                return `
                     <div class="fade-in-up bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                             <div class="space-y-3">
@@ -246,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
                                     <div class="flex items-center gap-1.5">
                                         <i data-lucide="indian-rupee" class="w-4 h-4 text-emerald-500"></i>
-                                        <span>Amount: <strong class="text-slate-900 dark:text-slate-100 font-bold">₹${Number(loan.amount).toLocaleString('en-IN')}</strong></span>
+                                        <span>Amount: <strong class="text-slate-900 dark:text-slate-100 font-bold">${formatINR(loan.amount)}</strong></span>
                                     </div>
                                     <div class="flex items-center gap-1.5">
                                         <i data-lucide="percent" class="w-4 h-4 text-indigo-500"></i>
@@ -258,41 +313,44 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                     <div class="flex items-center gap-1.5">
                                         <i data-lucide="calendar-days" class="w-4 h-4 text-slate-400"></i>
-                                        <span>Applied: <strong class="text-slate-700 dark:text-slate-300 font-semibold">${new Date(loan.date).toLocaleDateString()}</strong></span>
+                                        <span>Applied: <strong class="text-slate-700 dark:text-slate-300 font-semibold">${formatDate(loan.date)}</strong></span>
                                     </div>
                                 </div>
                             </div>
 
                             ${status === 'approved' ? `
-                                <button onclick="payEMI('${loan.emi_amount}', '${loan.id}')" 
+                                <button id="btn-pay-${loan.id}" onclick="payEMI('${loan.emi_amount}', '${loan.id}')" 
                                         class="w-full lg:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-bold py-3.5 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/20 text-xs sm:text-sm">
-                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
-                                    <span>Pay EMI (₹${Number(loan.emi_amount).toLocaleString('en-IN')})</span>
+                                    <i data-lucide="credit-card" class="w-4 h-4 icon-card"></i>
+                                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin hidden icon-spin"></i>
+                                    <span class="btn-text">Pay EMI (${formatINR(loan.emi_amount)})</span>
                                 </button>
                             ` : ''}
                         </div>
                         ${installmentsHtml}
-                    </div>
-                `;
-            });
+                    </div>`;
+            }).join('');
 
-            document.getElementById('stat-total-borrowed').innerText = '₹' + totalBorrowedSum.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            container.innerHTML = loansCardsHtml;
+            document.getElementById('stat-total-borrowed').innerText = formatINR(totalBorrowedSum);
             if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
             console.error('Error fetching loans:', err);
             document.getElementById('loans-container').innerHTML = `
-                <div class="p-8 text-center bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-[2rem] text-rose-600 font-bold text-sm">
+                <div class="p-8 text-center bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-[2rem] text-rose-600 dark:text-rose-400 font-bold text-sm">
                     Failed to load loans schedule. Please try refreshing the page.
                 </div>`;
         });
 
     // 2. Fetch Repayment History Data
     fetch('/api/repayments/')
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
         .then(data => {
             const tbody = document.getElementById('repay-tbody');
-            tbody.innerHTML = '';
             
             if (!data || data.length === 0) {
                 tbody.innerHTML = `
@@ -310,25 +368,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let totalRepaidSum = 0;
 
-            data.forEach(pay => {
+            const rowsHtml = data.map(pay => {
                 const amountPaid = parseFloat(pay.amount_paid) || 0;
                 totalRepaidSum += amountPaid;
 
-                tbody.innerHTML += `
+                return `
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td class="px-6 py-4 font-mono font-bold text-slate-800 dark:text-slate-200">
                             #${pay.loan__id}
                         </td>
                         <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
-                            ${new Date(pay.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            ${formatDate(pay.date)}
                         </td>
                         <td class="px-6 py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                            +₹${amountPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            +${formatINR(amountPaid)}
                         </td>
                     </tr>`;
-            });
+            }).join('');
 
-            document.getElementById('stat-total-repaid').innerText = '₹' + totalRepaidSum.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            tbody.innerHTML = rowsHtml;
+            document.getElementById('stat-total-repaid').innerText = formatINR(totalRepaidSum);
             if (window.lucide) lucide.createIcons();
         })
         .catch(err => {
@@ -343,23 +402,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Razorpay Integration Handler
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 async function payEMI(amount, loanId) {
+    const btn = document.getElementById(`btn-pay-${loanId}`);
     const csrftoken = getCookie('csrftoken');
+    
+    // Set Loading State
+    if (btn) {
+        btn.disabled = true;
+        btn.querySelector('.icon-card')?.classList.add('hidden');
+        btn.querySelector('.icon-spin')?.classList.remove('hidden');
+        btn.querySelector('.btn-text').innerText = 'Initializing...';
+    }
     
     try {
         const response = await fetch('/api/create-razorpay-order/', {
@@ -373,7 +426,8 @@ async function payEMI(amount, loanId) {
         
         const orderData = await response.json();
         if (!response.ok) {
-            alert(orderData.error || 'Failed to initiate payment.');
+            showToast(orderData.error || 'Failed to initiate payment.', 'error');
+            resetPayBtn(btn, amount);
             return;
         }
 
@@ -382,30 +436,41 @@ async function payEMI(amount, loanId) {
             "amount": orderData.amount,
             "currency": orderData.currency,
             "name": "DhananjayYuva",
-            "description": "Loan EMI Payment",
+            "description": `Loan #${loanId} EMI Payment`,
             "order_id": orderData.order_id,
             "handler": async function (response) {
-                const verifyRes = await fetch('/api/verify-razorpay-payment/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_signature: response.razorpay_signature,
-                        type: 'emi',
-                        amount: amount,
-                        loan_id: loanId
-                    })
-                });
+                try {
+                    const verifyRes = await fetch('/api/verify-razorpay-payment/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            type: 'emi',
+                            amount: amount,
+                            loan_id: loanId
+                        })
+                    });
 
-                if (verifyRes.ok) {
-                    alert('EMI payment successful!');
-                    window.location.reload();
-                } else {
-                    alert('Payment verification failed.');
+                    if (verifyRes.ok) {
+                        showToast('EMI payment completed successfully!', 'success');
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showToast('Payment verification failed. Please contact support.', 'error');
+                        resetPayBtn(btn, amount);
+                    }
+                } catch (e) {
+                    showToast('An error occurred while verifying the payment.', 'error');
+                    resetPayBtn(btn, amount);
+                }
+            },
+            "modal": {
+                "ondismiss": function() {
+                    resetPayBtn(btn, amount);
                 }
             },
             "theme": { "color": "#10b981" }
@@ -415,8 +480,17 @@ async function payEMI(amount, loanId) {
         rzp.open();
     } catch (err) {
         console.error(err);
-        alert('Something went wrong during payment initialization.');
+        showToast('Something went wrong during payment initialization.', 'error');
+        resetPayBtn(btn, amount);
     }
+}
+
+function resetPayBtn(btn, amount) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.querySelector('.icon-card')?.classList.remove('hidden');
+    btn.querySelector('.icon-spin')?.classList.add('hidden');
+    btn.querySelector('.btn-text').innerText = `Pay EMI (${formatINR(amount)})`;
 }
 </script>
 {% endblock %}
