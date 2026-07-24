@@ -19,7 +19,7 @@
     /* Print Optimizations */
     @media print {
         @page {
-            margin: 15mm;
+            margin: 10mm;
             size: A4 portrait;
         }
         body {
@@ -36,12 +36,25 @@
             border: 1px solid #cbd5e1 !important;
             background: #ffffff !important;
             backdrop-filter: none !important;
+            width: 100% !important;
+            margin: 0 !important;
         }
         .print\:border-slate-300 {
             border-color: #cbd5e1 !important;
         }
         tr {
             page-break-inside: avoid;
+        }
+        /* Fix Table Overflow & Scrollbars in Print */
+        .overflow-x-auto {
+            overflow-x: visible !important;
+        }
+        table {
+            width: 100% !important;
+            white-space: normal !important;
+        }
+        th, td {
+            white-space: normal !important;
         }
     }
 </style>
@@ -72,7 +85,7 @@
     </div>
 
     <!-- Printable Branded Header (Visible ONLY on print) -->
-    <div class="hidden print:block mb-8 p-6 bg-slate-50 border border-slate-300 rounded-2xl">
+    <div class="hidden print:block mb-6 p-6 bg-slate-50 border border-slate-300 rounded-2xl">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="bg-emerald-600 text-white p-3 rounded-xl">

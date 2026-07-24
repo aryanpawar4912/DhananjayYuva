@@ -401,8 +401,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 5. Fetch Real Dynamic Dashboard Data from API Endpoint
     fetch('/api/dashboard/', {
+        method: 'GET',
+        credentials: 'include',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
             'Content-Type': 'application/json'
         }
     })

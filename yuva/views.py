@@ -147,6 +147,8 @@ class DashboardAPI(APIView):
 
         return Response({
             'total_savings': round(total_savings, 2),
+            'share_capital': round(total_savings * 0.1, 2),  # Estimated or tied to savings rule
+            'credit_standing': 'Grade A+',
             'active_loans_count': active_loans_count,
             'recent_transactions': tx_data,
             'chart_labels': chart_labels,
@@ -202,10 +204,9 @@ class LoansAPI(APIView):
         data = []
         
         for loan in loans:
-            # Fetch and serialize associated installments for frontend schedule table
             installments = LoanInstallment.objects.filter(loan=loan).order_by('id')
             inst_data = [{
-                'installment_number': idx + 1,  # Safe fallback index if model field missing
+                'installment_number': idx + 1, 
                 'due_date': inst.due_date.strftime("%Y-%m-%d") if getattr(inst, 'due_date', None) else "N/A",
                 'principal_amount': str(getattr(inst, 'principal_amount', 0)),
                 'interest_amount': str(getattr(inst, 'interest_amount', 0)),
@@ -402,7 +403,7 @@ class AdminLoanManagementAPI(APIView):
         try:
             loan = Loan.objects.get(id=loan_id)
             new_status = request.data.get('status')
-            if new_status in dict(Loan.STATUS_CHOICES):
+            if new_status in Loan.Status.values:
                 loan.status = new_status
                 loan.save()
                 return Response({'message': f'Loan status updated to {new_status}'})
@@ -431,7 +432,6 @@ class RazorpayOrderAPI(APIView):
         client = razorpay.Client(auth=(key_id, key_secret))
         
         try:
-            # Razorpay expects the amount in paise (1 INR = 100 Paise)
             amount_in_paise = int(Decimal(str(amount)) * 100)
             data = {
                 "amount": amount_in_paise,
@@ -461,11 +461,10 @@ class RazorpayVerifyAPI(APIView):
         razorpay_payment_id = request.data.get('razorpay_payment_id')
         razorpay_signature = request.data.get('razorpay_signature')
         
-        payment_type = request.data.get('type')  # 'savings' or 'emi'
+        payment_type = request.data.get('type') 
         amount = request.data.get('amount')
         loan_id = request.data.get('loan_id')
 
-        # Check for missing signature fields
         if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
             return Response({'error': 'Missing Razorpay verification parameters.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -473,7 +472,6 @@ class RazorpayVerifyAPI(APIView):
         key_secret = getattr(settings, 'RAZORPAY_KEY_SECRET', '')
         client = razorpay.Client(auth=(key_id, key_secret))
 
-        # 1. Verify Payment Signature
         params_dict = {
             'razorpay_order_id': razorpay_order_id,
             'razorpay_payment_id': razorpay_payment_id,
@@ -487,13 +485,10 @@ class RazorpayVerifyAPI(APIView):
         except Exception as e:
             return Response({'error': f'Verification error: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Record Payment on Successful Verification
         try:
             amount_decimal = Decimal(str(amount)) if amount else Decimal('0.00')
 
-            # Ensure all database records update successfully, or rollback entirely
             with transaction.atomic():
-                
                 if payment_type == 'savings':
                     SavingsTransaction.objects.create(
                         member=member, 
@@ -510,13 +505,11 @@ class RazorpayVerifyAPI(APIView):
                     loan = Loan.objects.select_for_update().get(id=loan_id, member=member)
                     Repayment.objects.create(loan=loan, amount_paid=amount_decimal)
                     
-                    # Mark earliest unpaid installment as paid
                     installment = LoanInstallment.objects.filter(loan=loan, is_paid=False).order_by('id').first()
                     if installment:
                         installment.is_paid = True
                         installment.save()
 
-                    # Check if all installments are paid -> Update Loan status to Completed
                     unpaid_count = LoanInstallment.objects.filter(loan=loan, is_paid=False).count()
                     if unpaid_count == 0 and loan.status != 'completed':
                         loan.status = 'completed'

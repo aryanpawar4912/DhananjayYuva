@@ -164,8 +164,6 @@ def handle_loan_approval(sender, instance, created, **kwargs):
 
                 remaining_principal -= principal_comp
                 
-                # Note: relativedelta(months=1) from python-dateutil is more accurate for months, 
-                # but timedelta(days=30) is an acceptable approximation if dateutil is unavailable.
                 due_date = base_date + timedelta(days=30 * i)
 
                 LoanInstallment.objects.create(
