@@ -122,24 +122,8 @@ class DashboardMetricsAPI(APIView):
 
 
 # ==========================================
-# 3. Functional API Endpoints
+# 3. Functional API Endpoints & CRUD Views
 # ==========================================
-
-@api_view(['GET'])
-@permission_classes([IsAdminUser])
-def dashboard_metrics_api(request):
-    total_members = Member.objects.count()
-    loans = Loan.objects.all()
-    
-    total_disbursed = loans.aggregate(total=Sum('amount'))['total'] or 0
-    active_loans_count = loans.filter(status=Loan.Status.APPROVED).count()
-    
-    return Response({
-        "total_members": total_members,
-        "total_disbursed": float(total_disbursed),
-        "active_loans": active_loans_count,
-        "total_capital": float(total_disbursed),
-    })
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -172,10 +156,70 @@ def admin_loan_list_api(request):
     })
 
 
+class MemberDetailAPI(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        data = request.data.copy()
+        full_name = data.get('full_name', '')
+        if full_name:
+            parts = full_name.split(' ', 1)
+            data['user'] = {
+                'first_name': parts[0],
+                'last_name': parts[1] if len(parts) > 1 else '',
+                'email': data.get('email', '')
+            }
+        
+        serializer = MemberSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        print("Member Create Errors:", serializer.errors)
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request, pk):
+        try:
+            member = Member.objects.get(pk=pk)
+        except Member.DoesNotExist:
+            return Response({"error": "Member not found"}, status=404)
+        
+        data = request.data.copy()
+        
+        # Clean up non-model fields or normalize choices
+        data.pop('phone_number', None)
+        data.pop('village', None)
+        data.pop('residential_address', None)
+        data.pop('full_name', None)
+
+        # Normalize role to lowercase if your model expects lowercase choices
+        if 'role' in data and data['role']:
+            data['role'] = data['role'].lower()
+
+        if 'email' in data and member.user:
+            member.user.email = data.pop('email')
+            member.user.save()
+
+        serializer = MemberSerializer(member, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        print("Member Update Errors:", serializer.errors)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        try:
+            member = Member.objects.get(pk=pk)
+        except Member.DoesNotExist:
+            return Response({"error": "Member not found"}, status=404)
+        
+        member.delete()
+        return Response({"message": "Member deleted successfully"}, status=204)
+
+
 # ==========================================
 # 4. Loan Detail API (Edit / Delete)
 # ==========================================
-
 class LoanDetailAPI(APIView):
     permission_classes = [IsAdminUser]
 
@@ -186,18 +230,13 @@ class LoanDetailAPI(APIView):
             return Response({"error": "Loan not found"}, status=404)
         
         data = request.data.copy()
-        
-        # Convert status to lowercase/valid choice format if present
         if 'status' in data and isinstance(data['status'], str):
-            data['status'] = data['status'].lower()
+            data['status'] = data['status'].upper()
             
         serializer = LoanApplicationSerializer(loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        
-        # Returns exact error details to console/network response for debugging
-        print("Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=400)
 
     def delete(self, request, pk):

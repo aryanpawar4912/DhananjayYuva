@@ -1,71 +1,109 @@
 {% extends 'admin/admin_base.html' %}
 
-{% block title %}Yuva Admin - Loan Portfolios{% endblock %}
+{% block title %}Yuva Admin - Loan Management{% endblock %}
 
-{% block header_title %}Loan Portfolios & Exposure{% endblock %}
-{% block header_subtitle %}Monitor active credit lines, disbursements, and risk metrics.{% endblock %}
+{% block header_title %}Loan Applications & Portfolio{% endblock %}
+{% block header_subtitle %}Monitor active loans, review pending applications, and manage financial disbursals.{% endblock %}
 
 {% block header_actions %}
-<button onclick="fetchLoans()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-    <span>Sync Portfolios</span>
-</button>
+<div class="flex flex-wrap items-center gap-3">
+    <button onclick="fetchLoans()" class="px-4 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all duration-300 transform active:scale-95 flex items-center gap-2 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+        <svg class="w-4 h-4 transition-transform duration-500 hover:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Refresh Feed</span>
+    </button>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6 max-w-7xl mx-auto w-full">
-    
-    <!-- Dynamic Metric Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed Capital</span>
-            <h3 id="metric-disbursed" class="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-2">$0.00</h3>
+<div class="space-y-6 max-w-7xl mx-auto w-full pb-12 animate-fadeIn">
+
+    <!-- Metrics Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-indigo-500/40 transition-all">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/10 transition-all"></div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Loans</p>
+                <h3 id="statTotalLoans" class="text-2xl font-black text-slate-900 dark:text-white mt-1">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
         </div>
-        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Portfolio Risk</span>
-            <h3 id="metric-active" class="text-2xl sm:text-3xl font-bold text-emerald-400 tracking-tight mt-2">$0.00</h3>
+        
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-amber-500/40 transition-all">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition-all"></div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending Review</p>
+                <h3 id="statPendingLoans" class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
+                <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
         </div>
-        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Defaulted Risk Exposure</span>
-            <h3 id="metric-defaulted" class="text-2xl sm:text-3xl font-bold text-rose-400 tracking-tight mt-2">$0.00</h3>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all"></div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Approved Volume</p>
+                <h3 id="statApprovedAmount" class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">₹0.00</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-blue-500/40 transition-all">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all"></div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Completed Portfolio</p>
+                <h3 id="statCompletedLoans" class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
         </div>
     </div>
-
-    <!-- Filters & Search Toolbar -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <div class="relative w-full sm:w-96">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+    
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm dark:shadow-2xl">
+        <div class="relative w-full md:w-96">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 dark:text-slate-500">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </span>
-            <input type="text" id="loanSearch" onkeyup="filterLoans()" placeholder="Search by applicant name or ID..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors">
+            <input type="text" id="loanSearch" onkeyup="filterLoans()" placeholder="Search by applicant name or ID..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
         </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <select id="statusFilter" onchange="filterLoans()" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
-                <option value="ALL">All Statuses</option>
-                <option value="APPROVED">Approved</option>
-                <option value="PENDING">Pending</option>
-                <option value="REJECTED">Rejected</option>
-                <option value="COMPLETED">Completed</option>
-            </select>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <button onclick="filterByStatus('ALL')" class="status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20 transition-all">All</button>
+            <button onclick="filterByStatus('pending')" class="status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 transition-all">Pending</button>
+            <button onclick="filterByStatus('approved')" class="status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 transition-all">Approved</button>
+            <button onclick="filterByStatus('completed')" class="status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 transition-all">Completed</button>
+            <button onclick="filterByStatus('rejected')" class="status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 transition-all">Rejected</button>
         </div>
     </div>
 
-    <!-- Loan Data Table -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+    <!-- Loan Data Table Card -->
+    <div class="bg-white dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden transition-all">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-950/40">
-                        <th class="p-4 sm:px-6">Applicant Reference</th>
-                        <th class="p-4 sm:px-6">Amount</th>
-                        <th class="p-4 sm:px-6">Disbursal Date</th>
-                        <th class="p-4 sm:px-6">Loan Status</th>
+                    <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-950/60">
+                        <th class="p-4 sm:px-6">Loan ID & Member</th>
+                        <th class="p-4 sm:px-6">Principal Amount</th>
+                        <th class="p-4 sm:px-6">Interest & Tenure</th>
+                        <th class="p-4 sm:px-6">Status</th>
+                        <th class="p-4 sm:px-6">Application Date</th>
                         <th class="p-4 sm:px-6 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="loanTableBody" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                <tbody id="loanTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm text-slate-700 dark:text-slate-300">
                     <tr>
-                        <td colspan="5" class="p-8 text-center text-slate-500">Loading loan portfolio data...</td>
+                        <td colspan="6" class="p-12 text-center text-slate-400 dark:text-slate-500">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Loading secure loan ledger...</span>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -73,32 +111,58 @@
     </div>
 </div>
 
-<!-- Edit Loan Dialog Modal -->
-<!-- Edit Loan Dialog Modal -->
-<div id="editLoanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-5">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 class="text-lg font-bold text-white">Edit Loan Details</h3>
-            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white">&times;</button>
-        </div>
-        <form id="editLoanForm" onsubmit="submitEditLoan(event)" class="space-y-4">
-            <input type="hidden" id="editLoanId">
+<!-- Review / Edit Loan Status Modal -->
+<div id="loanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-md hidden transition-opacity duration-300 p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 transform transition-transform duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="modalContainer">
+        <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Loan Amount ($)</label>
-                <input type="number" id="editAmount" step="0.01" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none">
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white tracking-wide">Review Loan Application</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Modify status or view financial parameters.</p>
             </div>
+            <button onclick="closeLoanModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors text-lg">&times;</button>
+        </div>
+        
+        <form id="loanForm" onsubmit="submitLoanForm(event)" class="space-y-4">
+            <input type="hidden" id="loanId">
+            
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 block uppercase">Applicant</span>
+                    <span id="modalApplicant" class="text-sm font-bold text-slate-900 dark:text-white mt-0.5 block truncate">--</span>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 block uppercase">Requested Amount</span>
+                    <span id="modalAmount" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 mt-0.5 block">--</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Interest Rate (%)</label>
+                    <input type="text" id="modalInterest" disabled class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Tenure (Months)</label>
+                    <input type="text" id="modalTenure" disabled class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                </div>
+            </div>
+
             <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Loan Status</label>
-                <select id="editStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:border-indigo-500 focus:outline-none">
-                    <option value="approved">Approved</option>
+                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Application Status *</label>
+                <select id="modalStatusSelect" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer">
                     <option value="pending">Pending</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="approved">Approved</option>
                     <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
                 </select>
             </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-colors shadow-lg shadow-indigo-600/20">Save Changes</button>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeLoanModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors">Cancel</button>
+                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 transform active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Update Status</span>
+                </button>
             </div>
         </form>
     </div>
@@ -108,6 +172,22 @@
 {% block extra_js %}
 <script>
     let allLoans = [];
+    let currentStatusFilter = 'ALL';
+
+    // Helper to prevent Cross-Site Scripting (XSS)
+    function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>'"]/g, function (tag) {
+            const charsToReplace = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            };
+            return charsToReplace[tag] || tag;
+        });
+    }
 
     async function fetchLoans() {
         try {
@@ -123,91 +203,161 @@
             }
 
             const data = await response.json();
-            allLoans = data.loans;
-
-            document.getElementById('metric-disbursed').innerText = `$${Number(data.metrics.total_disbursed).toLocaleString()}`;
-            document.getElementById('metric-active').innerText = `$${Number(data.metrics.active_exposure).toLocaleString()}`;
-            document.getElementById('metric-defaulted').innerText = `$${Number(data.metrics.defaulted_exposure).toLocaleString()}`;
-
+            allLoans = Array.isArray(data) ? data : (data.loans || data.results || []);
+            
+            updateMetrics(allLoans);
             renderLoanTable(allLoans);
         } catch (err) {
-            console.error("Error fetching loan portfolios:", err);
-            document.getElementById('loanTableBody').innerHTML = `<tr><td colspan="5" class="p-8 text-center text-rose-400">Failed to load live loan portfolios.</td></tr>`;
+            console.error("Error fetching loans:", err);
+            document.getElementById('loanTableBody').innerHTML = `<tr><td colspan="6" class="p-12 text-center text-rose-500 dark:text-rose-400 font-medium">Failed to synchronize loan ledger. Check network status.</td></tr>`;
         }
+    }
+
+    function updateMetrics(loans) {
+        const total = loans.length;
+        const pending = loans.filter(l => (l.status || '').toLowerCase() === 'pending').length;
+        const completed = loans.filter(l => (l.status || '').toLowerCase() === 'completed').length;
+        
+        const approvedSum = loans
+            .filter(l => (l.status || '').toLowerCase() === 'approved')
+            .reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
+
+        document.getElementById('statTotalLoans').innerText = total;
+        document.getElementById('statPendingLoans').innerText = pending;
+        document.getElementById('statCompletedLoans').innerText = completed;
+        document.getElementById('statApprovedAmount').innerText = '₹' + approvedSum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function renderLoanTable(loans) {
         const tbody = document.getElementById('loanTableBody');
         if (loans.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">No loan portfolios found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-slate-400 dark:text-slate-500 font-medium">No matching loan entries found.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = loans.map(l => `
-            <tr class="hover:bg-slate-800/40 transition-colors">
-                <td class="p-4 sm:px-6">
-                    <div class="font-semibold text-white">${l.applicant_name || 'Unknown Applicant'}</div>
-                    <div class="text-xs text-slate-500">Member ID: #${l.member}</div>
-                </td>
-                <td class="p-4 sm:px-6 font-bold text-indigo-400">
-                    $${Number(l.amount).toLocaleString()}
-                </td>
-                <td class="p-4 sm:px-6 text-slate-400">
-                    ${l.disbursal_date || 'N/A'}
-                </td>
-                <td class="p-4 sm:px-6">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getLoanStatusBadge(l.status)}">
-                        ${l.status}
-                    </span>
-                </td>
-                <td class="p-4 sm:px-6 text-right space-x-2">
-                    <button onclick="openEditModal(${l.id}, ${l.amount}, '${l.status}')" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-600/20 text-indigo-400 rounded-lg text-xs font-semibold transition-colors border border-slate-700">Edit</button>
-                    <button onclick="deleteLoan(${l.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-600/20 text-rose-400 rounded-lg text-xs font-semibold transition-colors border border-slate-700">Delete</button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = loans.map(l => {
+            const statusVal = (l.status || 'pending').toLowerCase();
+            let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+            let dotClass = 'bg-slate-400';
+            
+            if (statusVal === 'approved') {
+                statusBadgeClass = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+                dotClass = 'bg-emerald-500 dark:bg-emerald-400';
+            } else if (statusVal === 'pending') {
+                statusBadgeClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+                dotClass = 'bg-amber-500 dark:bg-amber-400 animate-ping';
+            } else if (statusVal === 'completed') {
+                statusBadgeClass = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+                dotClass = 'bg-blue-500 dark:bg-blue-400';
+            } else if (statusVal === 'rejected') {
+                statusBadgeClass = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+                dotClass = 'bg-rose-500 dark:bg-rose-400';
+            }
+
+            const applicantName = escapeHTML(l.applicant_name || l.member_name || 'Member #' + (l.member || 'N/A'));
+            const formattedAmount = '₹' + parseFloat(l.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            const formattedDate = escapeHTML(l.disbursal_date || l.date || 'N/A');
+
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                    <td class="p-4 sm:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs shadow-sm group-hover:scale-105 transition-transform">
+                                ${applicantName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">${applicantName}</div>
+                                <div class="text-xs font-mono text-slate-400 dark:text-slate-500">Loan ID: #${l.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 sm:px-6 font-bold text-slate-900 dark:text-white">
+                        ${formattedAmount}
+                    </td>
+                    <td class="p-4 sm:px-6 text-xs text-slate-600 dark:text-slate-300">
+                        <div class="font-semibold text-indigo-600 dark:text-indigo-300">${escapeHTML(l.interest_rate || '10.0')}% Interest</div>
+                        <div class="text-slate-400 dark:text-slate-500 mt-0.5">${escapeHTML(String(l.tenure_months || 12))} Months Tenure</div>
+                    </td>
+                    <td class="p-4 sm:px-6">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClass}">
+                            <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span>
+                            ${statusVal.charAt(0).toUpperCase() + statusVal.slice(1)}
+                        </span>
+                    </td>
+                    <td class="p-4 sm:px-6 text-slate-500 dark:text-slate-400 text-xs font-mono">
+                        ${formattedDate}
+                    </td>
+                    <td class="p-4 sm:px-6 text-right space-x-2 whitespace-nowrap">
+                        <button onclick='openReviewModal(${l.id}, ${JSON.stringify(applicantName)}, ${l.amount}, ${l.interest_rate || 10}, ${l.tenure_months || 12}, ${JSON.stringify(statusVal)})' class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-semibold transition-all border border-slate-200 dark:border-slate-700/80 active:scale-95 shadow-sm">Review</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    function getLoanStatusBadge(status) {
-        switch(status?.toUpperCase()) {
-            case 'APPROVED': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-            case 'REJECTED': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-            case 'COMPLETED': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-            default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-        }
+    function filterByStatus(status) {
+        currentStatusFilter = status;
+        
+        document.querySelectorAll('.status-tab').forEach(btn => {
+            btn.className = "status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 transition-all";
+        });
+        event.currentTarget.className = "status-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20 transition-all";
+
+        applyFilters();
     }
 
     function filterLoans() {
-        const query = document.getElementById('loanSearch').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
+        applyFilters();
+    }
 
+    function applyFilters() {
+        const query = document.getElementById('loanSearch').value.toLowerCase();
+        
         const filtered = allLoans.filter(l => {
-            const name = (l.applicant_name || '').toLowerCase();
-            const memberId = String(l.member || '');
-            const matchesQuery = name.includes(query) || memberId.includes(query) || String(l.amount).includes(query);
-            const matchesStatus = statusFilter === 'ALL' || l.status === statusFilter;
+            const applicantName = (l.applicant_name || l.member_name || '').toLowerCase();
+            const idStr = String(l.id || '').toLowerCase();
+            const statusStr = (l.status || '').toLowerCase();
+
+            const matchesQuery = applicantName.includes(query) || idStr.includes(query);
+            const matchesStatus = currentStatusFilter === 'ALL' || statusStr === currentStatusFilter.toLowerCase();
+
             return matchesQuery && matchesStatus;
         });
 
         renderLoanTable(filtered);
     }
 
-    function openEditModal(id, amount, status) {
-        document.getElementById('editLoanId').value = id;
-        document.getElementById('editAmount').value = amount;
-        document.getElementById('editStatus').value = status;
-        document.getElementById('editLoanModal').classList.remove('hidden');
+    function openReviewModal(id, applicant, amount, interest, tenure, status) {
+        document.getElementById('loanId').value = id;
+        document.getElementById('modalApplicant').innerText = applicant;
+        document.getElementById('modalAmount').innerText = '₹' + parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('modalInterest').value = interest + '% p.a.';
+        document.getElementById('modalTenure').value = tenure + ' Months';
+        document.getElementById('modalStatusSelect').value = status;
+
+        const modal = document.getElementById('loanModal');
+        const container = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('scale-95', 'opacity-0');
+            container.classList.add('scale-100', 'opacity-100');
+        }, 10);
     }
 
-    function closeEditModal() {
-        document.getElementById('editLoanModal').classList.add('hidden');
+    function closeLoanModal() {
+        const modal = document.getElementById('loanModal');
+        const container = document.getElementById('modalContainer');
+        container.classList.remove('scale-100', 'opacity-100');
+        container.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
     }
 
-    async function submitEditLoan(event) {
+    async function submitLoanForm(event) {
         event.preventDefault();
-        const id = document.getElementById('editLoanId').value;
-        const amount = document.getElementById('editAmount').value;
-        const status = document.getElementById('editStatus').value;
+        const id = document.getElementById('loanId').value;
+        const newStatus = document.getElementById('modalStatusSelect').value;
 
         try {
             const csrftoken = getCookie('csrftoken');
@@ -218,40 +368,18 @@
                     'X-CSRFToken': csrftoken,
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ amount, status })
+                body: JSON.stringify({ status: newStatus })
             });
 
             if (response.ok) {
-                closeEditModal();
+                closeLoanModal();
                 fetchLoans();
             } else {
-                alert('Failed to update loan record.');
+                const errData = await response.json();
+                alert('Failed to update loan status: ' + JSON.stringify(errData));
             }
         } catch (err) {
-            console.error('Error updating loan:', err);
-        }
-    }
-
-    async function deleteLoan(id) {
-        if (!confirm('Are you sure you want to delete this loan record?')) return;
-
-        try {
-            const csrftoken = getCookie('csrftoken');
-            const response = await fetch(`/admin-panel/api/loans/${id}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (response.ok) {
-                fetchLoans();
-            } else {
-                alert('Failed to delete loan record.');
-            }
-        } catch (err) {
-            console.error('Error deleting loan:', err);
+            console.error('Error updating loan status:', err);
         }
     }
 
@@ -270,6 +398,7 @@
         return cookieValue;
     }
 
+    // Initialize data payload on view load
     fetchLoans();
 </script>
 {% endblock %}

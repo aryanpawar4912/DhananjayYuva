@@ -3,50 +3,178 @@
 {% block title %}Yuva Admin - Members Directory{% endblock %}
 
 {% block header_title %}Members Directory{% endblock %}
-{% block header_subtitle %}Manage registered members, credit ratings, and statuses.{% endblock %}
+{% block header_subtitle %}Manage registered members, account types, and operational statuses.{% endblock %}
 
 {% block header_actions %}
-<button onclick="fetchMembers()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-    <span>Refresh List</span>
-</button>
+<div class="flex flex-wrap items-center gap-3">
+    <button onclick="openCreateModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all duration-300 transform active:scale-95 flex items-center gap-2">
+        <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Add New Member</span>
+    </button>
+    <button onclick="fetchMembers()" class="px-4 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all duration-300 transform active:scale-95 flex items-center gap-2 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+        <svg class="w-4 h-4 transition-transform duration-500 hover:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Refresh List</span>
+    </button>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6 max-w-7xl mx-auto w-full">
+<div class="space-y-6 max-w-7xl mx-auto w-full pb-12 animate-fadeIn">
     
-    <!-- Search and Filter Bar -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <div class="relative w-full sm:w-96">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-            <input type="text" id="memberSearch" onkeyup="filterMembers()" placeholder="Search members by name..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors">
+    <!-- Dynamic Metric Cards Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Total Users Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-2xl flex items-center justify-between transition-all">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Users</p>
+                <h4 id="statTotalUsers" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">0</h4>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
         </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <span id="memberCountBadge" class="text-xs px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 font-medium border border-slate-700">Total: 0</span>
+
+        <!-- Active Members Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-2xl flex items-center justify-between transition-all">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Members</p>
+                <h4 id="statActiveMembers" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">0</h4>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-100 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </div>
+
+        <!-- Admin Count Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm dark:shadow-2xl flex items-center justify-between transition-all">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">System Admins</p>
+                <h4 id="statAdmins" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">0</h4>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-600/20 border border-purple-100 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
         </div>
     </div>
 
-    <!-- Members Table Card -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+    <!-- Search & Filter Toolbar -->
+    <div class="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm dark:shadow-2xl">
+        <div class="relative w-full">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 dark:text-slate-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" id="memberSearch" onkeyup="filterMembers()" placeholder="Search members by name, username, or email..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+        </div>
+        <div id="memberCountBadge" class="text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50 px-4 py-3 rounded-xl whitespace-nowrap shadow-inner flex items-center gap-2 w-full sm:w-auto justify-center">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-ping"></span>
+            Total Members: 0
+        </div>
+    </div>
+
+    <!-- Members Responsive Data Table Card -->
+    <div class="bg-white dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden transition-all">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-950/40">
-                        <th class="p-4 sm:px-6">Full Name</th>
-                        <th class="p-4 sm:px-6">Join Date</th>
-                        <th class="p-4 sm:px-6">Credit Grade</th>
+                    <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-950/60">
+                        <th class="p-4 sm:px-6">User ID / Name</th>
+                        <th class="p-4 sm:px-6">Username</th>
+                        <th class="p-4 sm:px-6">User Type</th>
                         <th class="p-4 sm:px-6">Status</th>
+                        <th class="p-4 sm:px-6">Join Date</th>
+                        <th class="p-4 sm:px-6 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="memberTableBody" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                <tbody id="memberTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm text-slate-700 dark:text-slate-300">
                     <tr>
-                        <td colspan="4" class="p-8 text-center text-slate-500">Loading directory records...</td>
+                        <td colspan="6" class="p-12 text-center text-slate-400 dark:text-slate-500">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Loading secure members directory...</span>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- Create / Edit Member Modal -->
+<div id="memberModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-md hidden transition-opacity duration-300 p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto transform transition-transform duration-300 scale-95 opacity-0" id="modalContainer">
+        <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white tracking-wide">Add New Member</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Secure updates synchronize directly with backend role records.</p>
+            </div>
+            <button onclick="closeMemberModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors text-lg">&times;</button>
+        </div>
+        
+        <form id="memberForm" onsubmit="submitMemberForm(event)" class="space-y-4">
+            <input type="hidden" id="memberId">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">System Username</label>
+                    <input type="text" id="memberUsername" disabled class="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Full Name *</label>
+                    <input type="text" id="memberFullName" required placeholder="e.g. Aryan Ashok Pawar" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Email Address *</label>
+                    <input type="email" id="memberEmail" required placeholder="name@example.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Phone Number *</label>
+                    <input type="text" id="memberPhone" placeholder="9922381236" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Village *</label>
+                    <input type="text" id="memberVillage" placeholder="Pimparkhed" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">User Type *</label>
+                    <select id="memberRole" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer">
+                        <option value="MEMBER">Member</option>
+                        <option value="USER">User</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Residential Address</label>
+                <textarea id="memberAddress" rows="2" placeholder="Pimparkhed, Tal. Dindori" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
+                <div>
+                    <span class="text-sm font-semibold text-slate-900 dark:text-white block">Account Status Designation</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">Toggle whether this user profile is active or deactivated.</span>
+                </div>
+                <select id="memberStatus" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-sm">
+                    <option value="Active">Active</option>
+                    <option value="Deactivated">Deactivated</option>
+                </select>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeMemberModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors">Cancel</button>
+                <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2 transform active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -54,6 +182,21 @@
 {% block extra_js %}
 <script>
     let allMembers = [];
+
+    // Helper to prevent Cross-Site Scripting (XSS)
+    function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>'"]/g, function (tag) {
+            const charsToReplace = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            };
+            return charsToReplace[tag] || tag;
+        });
+    }
 
     async function fetchMembers() {
         try {
@@ -70,58 +213,233 @@
 
             const data = await response.json();
             allMembers = data.members;
-            document.getElementById('memberCountBadge').innerText = `Total: ${data.count}`;
-            renderTable(allMembers);
+            
+            // Calculate and render dynamic statistics
+            updateMetrics(allMembers, data.count);
 
+            document.getElementById('memberCountBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400 inline-block mr-1.5 animate-pulse"></span>Total Members: ${data.count}`;
+            renderMemberTable(allMembers);
         } catch (err) {
-            console.error("Error loading member data:", err);
-            document.getElementById('memberTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-rose-400">Failed to load directory data.</td></tr>`;
+            console.error("Error fetching members:", err);
+            document.getElementById('memberTableBody').innerHTML = `<tr><td colspan="6" class="p-12 text-center text-rose-500 dark:text-rose-400 font-medium">Failed to load members directory. Please check your connection.</td></tr>`;
         }
     }
 
-    function renderTable(members) {
+    function updateMetrics(members, totalCount) {
+        const totalUsers = totalCount || members.length;
+        const activeMembers = members.filter(m => (m.status || 'Active') === 'Active').length;
+        const adminCount = members.filter(m => (m.role || '').toUpperCase() === 'ADMIN').length;
+
+        document.getElementById('statTotalUsers').innerText = totalUsers;
+        document.getElementById('statActiveMembers').innerText = activeMembers;
+        document.getElementById('statAdmins').innerText = adminCount;
+    }
+
+    function renderMemberTable(members) {
         const tbody = document.getElementById('memberTableBody');
         if (members.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-500">No members found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-slate-400 dark:text-slate-500 font-medium">No matching members found.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = members.map(m => `
-            <tr class="hover:bg-slate-800/40 transition-colors">
-                <td class="p-4 sm:px-6 font-semibold text-white flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600/10 text-indigo-400 font-bold flex items-center justify-center border border-indigo-500/20 text-xs">
-                        ${m.full_name ? m.full_name.slice(0, 2).toUpperCase() : 'U'}
-                    </div>
-                    ${m.full_name}
-                </td>
-                <td class="p-4 sm:px-6 text-slate-400">${m.join_date}</td>
-                <td class="p-4 sm:px-6">
-                    <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-slate-800 text-indigo-400 border border-slate-700">Grade ${m.credit_grade}</span>
-                </td>
-                <td class="p-4 sm:px-6">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(m.status)}">
-                        ${m.status}
-                    </span>
-                </td>
-            </tr>
-        `).join('');
-    }
+        tbody.innerHTML = members.map(m => {
+            let roleClass = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+            const roleVal = escapeHTML(m.role || 'MEMBER').toUpperCase();
+            if (roleVal === 'ADMIN') roleClass = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
+            else if (roleVal === 'MEMBER') roleClass = 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
+            else roleClass = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
 
-    function getStatusBadgeClass(status) {
-        switch(status) {
-            case 'Active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-            case 'Warning': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-            case 'Defaulter': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-            default: return 'bg-slate-800 text-slate-400';
-        }
+            const statusIsActive = (m.status || 'Active') === 'Active';
+            const fullName = escapeHTML(m.full_name || 'N/A');
+            const initial = fullName !== 'N/A' ? fullName.charAt(0).toUpperCase() : 'U';
+            const username = escapeHTML(m.username || 'N/A');
+            const joinDate = escapeHTML(m.join_date || 'N/A');
+
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                    <td class="p-4 sm:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-100 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs shadow-sm group-hover:scale-105 transition-transform">
+                                ${initial}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">${fullName}</div>
+                                <div class="text-xs font-mono text-slate-400 dark:text-slate-500">ID: #${m.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 sm:px-6 font-mono text-xs text-slate-500 dark:text-slate-400">
+                        @${username}
+                    </td>
+                    <td class="p-4 sm:px-6">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-semibold border ${roleClass}">
+                            ${roleVal.charAt(0) + roleVal.slice(1).toLowerCase()}
+                        </span>
+                    </td>
+                    <td class="p-4 sm:px-6">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusIsActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'}">
+                            <span class="w-1.5 h-1.5 rounded-full ${statusIsActive ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-rose-500 dark:bg-rose-400'}"></span>
+                            ${escapeHTML(m.status || 'Active')}
+                        </span>
+                    </td>
+                    <td class="p-4 sm:px-6 text-slate-500 dark:text-slate-400 text-xs">
+                        ${joinDate}
+                    </td>
+                    <td class="p-4 sm:px-6 text-right space-x-2 whitespace-nowrap">
+                        <button onclick="triggerEditModal(${m.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-semibold transition-all border border-slate-200 dark:border-slate-700/80 active:scale-95 shadow-sm">Edit</button>
+                        <button onclick="deleteMember(${m.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold transition-all border border-slate-200 dark:border-slate-700/80 active:scale-95 shadow-sm">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function filterMembers() {
         const query = document.getElementById('memberSearch').value.toLowerCase();
-        const filtered = allMembers.filter(m => m.full_name.toLowerCase().includes(query));
-        renderTable(filtered);
+        const filtered = allMembers.filter(m => {
+            const name = (m.full_name || '').toLowerCase();
+            const username = (m.username || '').toLowerCase();
+            const email = (m.email || '').toLowerCase();
+            return name.includes(query) || username.includes(query) || email.includes(query);
+        });
+        renderMemberTable(filtered);
     }
 
+    function openCreateModal() {
+        document.getElementById('modalTitle').innerText = 'Add New Member';
+        document.getElementById('memberId').value = '';
+        document.getElementById('memberUsername').value = 'Auto-generated on creation';
+        document.getElementById('memberFullName').value = '';
+        document.getElementById('memberEmail').value = '';
+        document.getElementById('memberPhone').value = '';
+        document.getElementById('memberVillage').value = '';
+        document.getElementById('memberAddress').value = '';
+        document.getElementById('memberRole').value = 'MEMBER';
+        document.getElementById('memberStatus').value = 'Active';
+        
+        toggleModal(true);
+    }
+
+    function triggerEditModal(id) {
+        const m = allMembers.find(member => member.id === id);
+        if (!m) return;
+
+        document.getElementById('modalTitle').innerText = 'Edit Member Details';
+        document.getElementById('memberId').value = m.id;
+        document.getElementById('memberUsername').value = m.username || 'N/A';
+        document.getElementById('memberFullName').value = m.full_name || '';
+        document.getElementById('memberEmail').value = m.email || '';
+        document.getElementById('memberPhone').value = m.phone_number || '';
+        document.getElementById('memberVillage').value = m.village || '';
+        document.getElementById('memberAddress').value = m.residential_address || '';
+        document.getElementById('memberRole').value = m.role || 'MEMBER';
+        document.getElementById('memberStatus').value = m.status || 'Active';
+        
+        toggleModal(true);
+    }
+
+    function closeMemberModal() {
+        toggleModal(false);
+    }
+
+    function toggleModal(show) {
+        const modal = document.getElementById('memberModal');
+        const container = document.getElementById('modalContainer');
+        
+        if (show) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        } else {
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+    }
+
+    async function submitMemberForm(event) {
+        event.preventDefault();
+        const id = document.getElementById('memberId').value;
+        const payload = {
+            full_name: document.getElementById('memberFullName').value,
+            email: document.getElementById('memberEmail').value,
+            phone_number: document.getElementById('memberPhone').value,
+            village: document.getElementById('memberVillage').value,
+            residential_address: document.getElementById('memberAddress').value,
+            role: document.getElementById('memberRole').value,
+            status: document.getElementById('memberStatus').value
+        };
+
+        const url = id ? `/admin-panel/api/members/${id}/` : `/admin-panel/api/members/create/`;
+        const method = id ? 'PATCH' : 'POST';
+
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                closeMemberModal();
+                fetchMembers();
+            } else {
+                const errData = await response.json();
+                alert('Failed to save member profile: ' + JSON.stringify(errData));
+            }
+        } catch (err) {
+            console.error('Error saving member profile:', err);
+        }
+    }
+
+    async function deleteMember(id) {
+        if (!confirm('Are you sure you want to delete this member?')) return;
+
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch(`/admin-panel/api/members/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                fetchMembers();
+            } else {
+                alert('Failed to delete member.');
+            }
+        } catch (err) {
+            console.error('Error deleting member:', err);
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialize data on load
     fetchMembers();
 </script>
 {% endblock %}
