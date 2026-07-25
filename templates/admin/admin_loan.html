@@ -1,0 +1,275 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Yuva Admin - Loan Portfolios{% endblock %}
+
+{% block header_title %}Loan Portfolios & Exposure{% endblock %}
+{% block header_subtitle %}Monitor active credit lines, disbursements, and risk metrics.{% endblock %}
+
+{% block header_actions %}
+<button onclick="fetchLoans()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <span>Sync Portfolios</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto w-full">
+    
+    <!-- Dynamic Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed Capital</span>
+            <h3 id="metric-disbursed" class="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-2">$0.00</h3>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Portfolio Risk</span>
+            <h3 id="metric-active" class="text-2xl sm:text-3xl font-bold text-emerald-400 tracking-tight mt-2">$0.00</h3>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Defaulted Risk Exposure</span>
+            <h3 id="metric-defaulted" class="text-2xl sm:text-3xl font-bold text-rose-400 tracking-tight mt-2">$0.00</h3>
+        </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        <div class="relative w-full sm:w-96">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" id="loanSearch" onkeyup="filterLoans()" placeholder="Search by applicant name or ID..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors">
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <select id="statusFilter" onchange="filterLoans()" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+                <option value="ALL">All Statuses</option>
+                <option value="APPROVED">Approved</option>
+                <option value="PENDING">Pending</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="COMPLETED">Completed</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Loan Data Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-950/40">
+                        <th class="p-4 sm:px-6">Applicant Reference</th>
+                        <th class="p-4 sm:px-6">Amount</th>
+                        <th class="p-4 sm:px-6">Disbursal Date</th>
+                        <th class="p-4 sm:px-6">Loan Status</th>
+                        <th class="p-4 sm:px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="loanTableBody" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-500">Loading loan portfolio data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Loan Dialog Modal -->
+<!-- Edit Loan Dialog Modal -->
+<div id="editLoanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-5">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-lg font-bold text-white">Edit Loan Details</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white">&times;</button>
+        </div>
+        <form id="editLoanForm" onsubmit="submitEditLoan(event)" class="space-y-4">
+            <input type="hidden" id="editLoanId">
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Loan Amount ($)</label>
+                <input type="number" id="editAmount" step="0.01" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Loan Status</label>
+                <select id="editStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:border-indigo-500 focus:outline-none">
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-colors shadow-lg shadow-indigo-600/20">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allLoans = [];
+
+    async function fetchLoans() {
+        try {
+            const response = await fetch('/admin-panel/api/loans/', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/login/?next=/admin-panel/loans/';
+                return;
+            }
+
+            const data = await response.json();
+            allLoans = data.loans;
+
+            document.getElementById('metric-disbursed').innerText = `$${Number(data.metrics.total_disbursed).toLocaleString()}`;
+            document.getElementById('metric-active').innerText = `$${Number(data.metrics.active_exposure).toLocaleString()}`;
+            document.getElementById('metric-defaulted').innerText = `$${Number(data.metrics.defaulted_exposure).toLocaleString()}`;
+
+            renderLoanTable(allLoans);
+        } catch (err) {
+            console.error("Error fetching loan portfolios:", err);
+            document.getElementById('loanTableBody').innerHTML = `<tr><td colspan="5" class="p-8 text-center text-rose-400">Failed to load live loan portfolios.</td></tr>`;
+        }
+    }
+
+    function renderLoanTable(loans) {
+        const tbody = document.getElementById('loanTableBody');
+        if (loans.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">No loan portfolios found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = loans.map(l => `
+            <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-4 sm:px-6">
+                    <div class="font-semibold text-white">${l.applicant_name || 'Unknown Applicant'}</div>
+                    <div class="text-xs text-slate-500">Member ID: #${l.member}</div>
+                </td>
+                <td class="p-4 sm:px-6 font-bold text-indigo-400">
+                    $${Number(l.amount).toLocaleString()}
+                </td>
+                <td class="p-4 sm:px-6 text-slate-400">
+                    ${l.disbursal_date || 'N/A'}
+                </td>
+                <td class="p-4 sm:px-6">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getLoanStatusBadge(l.status)}">
+                        ${l.status}
+                    </span>
+                </td>
+                <td class="p-4 sm:px-6 text-right space-x-2">
+                    <button onclick="openEditModal(${l.id}, ${l.amount}, '${l.status}')" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-600/20 text-indigo-400 rounded-lg text-xs font-semibold transition-colors border border-slate-700">Edit</button>
+                    <button onclick="deleteLoan(${l.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-600/20 text-rose-400 rounded-lg text-xs font-semibold transition-colors border border-slate-700">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function getLoanStatusBadge(status) {
+        switch(status?.toUpperCase()) {
+            case 'APPROVED': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            case 'REJECTED': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+            case 'COMPLETED': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+            default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        }
+    }
+
+    function filterLoans() {
+        const query = document.getElementById('loanSearch').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        const filtered = allLoans.filter(l => {
+            const name = (l.applicant_name || '').toLowerCase();
+            const memberId = String(l.member || '');
+            const matchesQuery = name.includes(query) || memberId.includes(query) || String(l.amount).includes(query);
+            const matchesStatus = statusFilter === 'ALL' || l.status === statusFilter;
+            return matchesQuery && matchesStatus;
+        });
+
+        renderLoanTable(filtered);
+    }
+
+    function openEditModal(id, amount, status) {
+        document.getElementById('editLoanId').value = id;
+        document.getElementById('editAmount').value = amount;
+        document.getElementById('editStatus').value = status;
+        document.getElementById('editLoanModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editLoanModal').classList.add('hidden');
+    }
+
+    async function submitEditLoan(event) {
+        event.preventDefault();
+        const id = document.getElementById('editLoanId').value;
+        const amount = document.getElementById('editAmount').value;
+        const status = document.getElementById('editStatus').value;
+
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch(`/admin-panel/api/loans/${id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ amount, status })
+            });
+
+            if (response.ok) {
+                closeEditModal();
+                fetchLoans();
+            } else {
+                alert('Failed to update loan record.');
+            }
+        } catch (err) {
+            console.error('Error updating loan:', err);
+        }
+    }
+
+    async function deleteLoan(id) {
+        if (!confirm('Are you sure you want to delete this loan record?')) return;
+
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch(`/admin-panel/api/loans/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                fetchLoans();
+            } else {
+                alert('Failed to delete loan record.');
+            }
+        } catch (err) {
+            console.error('Error deleting loan:', err);
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    fetchLoans();
+</script>
+{% endblock %}

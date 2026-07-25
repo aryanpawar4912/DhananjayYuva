@@ -13,7 +13,7 @@ class Member(models.Model):
         USER = 'user', 'User'
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='yuva_member'
     )
     phone = models.CharField(max_length=15, blank=True, null=True)
     village = models.CharField(max_length=100, blank=True, null=True)
