@@ -1,6 +1,6 @@
 from datetime import date
 from rest_framework import serializers
-from yuva.models import Member, Loan, SavingsTransaction, Repayment
+from yuva.models import Member, Loan, SavingsTransaction, Repayment, WeeklyCollection, AttendanceRecord, IncomeExpense, RentalItem, Meeting
 
 class MemberSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='user.get_full_name', read_only=True, default='N/A')
@@ -79,4 +79,56 @@ class SavingsTransactionSerializer(serializers.ModelSerializer):
 class RepaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Repayment
+        fields = '__all__'
+
+
+class WeeklyCollectionSerializer(serializers.ModelSerializer):
+    member_name = serializers.CharField(source='member.user.username', read_only=True)
+
+    class Meta:
+        model = WeeklyCollection
+        fields = '__all__'
+
+
+class MeetingSerializer(serializers.ModelSerializer):
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = Meeting
+        fields = '__all__'
+
+
+class AttendanceRecordSerializer(serializers.ModelSerializer):
+    member_name = serializers.CharField(source='member.user.username', read_only=True)
+    meeting_title = serializers.CharField(source='meeting.title', read_only=True)
+    meeting_date = serializers.DateField(source='meeting.date', read_only=True)
+
+    class Meta:
+        model = AttendanceRecord
+        fields = [
+            'id',
+            'member',
+            'member_name',
+            'meeting',
+            'meeting_title',
+            'meeting_date',
+            'date',
+            'status',
+            'fine_amount',
+            'comments',
+            'created_at',
+        ]
+        read_only_fields = ['member_name', 'meeting_title', 'meeting_date']
+
+
+class IncomeExpenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IncomeExpense
+        fields = '__all__'
+
+
+class RentalItemSerializer(serializers.ModelSerializer):
+    """Serializer for managing items available for rent."""
+    class Meta:
+        model = RentalItem
         fields = '__all__'

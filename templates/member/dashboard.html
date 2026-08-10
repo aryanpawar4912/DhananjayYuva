@@ -15,6 +15,7 @@
     .delay-200 { animation-delay: 200ms; }
     .delay-300 { animation-delay: 300ms; }
     .delay-400 { animation-delay: 400ms; }
+    .delay-500 { animation-delay: 500ms; }
     
     @keyframes fadeInUp {
         to { opacity: 1; transform: translateY(0); }
@@ -53,13 +54,13 @@
     }
 </style>
 
-<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10">
+<div class="relative space-y-8 max-w-7xl mx-auto w-full z-10 pb-10">
     
     <!-- Ambient Lighting Orbs -->
     <div class="bg-orb-1"></div>
     <div class="bg-orb-2"></div>
 
-    <!-- Page Header & Quick Actions -->
+    <!-- 1. Page Header & Quick Actions -->
     <div class="fade-in-up flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
         <div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1 mb-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
@@ -86,13 +87,16 @@
             <a href="{% url 'passbook' %}" class="px-3.5 py-2.5 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-xs border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all flex items-center gap-2">
                 <i data-lucide="book-open" class="w-4 h-4 text-indigo-500"></i> Passbook
             </a>
+            <a href="{% url 'chat' %}" class="px-3.5 py-2.5 bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs shadow-lg shadow-slate-900/10 dark:shadow-emerald-500/20 transition-all flex items-center gap-2">
+                <i data-lucide="message-square" class="w-4 h-4"></i> Live Chat
+            </a>
         </div>
     </div>
 
-    <!-- 4-Column Metric Cards Grid -->
+    <!-- 2. Core Metrics (4-Column Grid) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 relative z-10">
         
-        <!-- 1. Total Savings Card -->
+        <!-- Total Savings Card -->
         <div class="fade-in-up delay-100 group relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-emerald-500/5 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
             
@@ -117,7 +121,7 @@
             </div>
         </div>
 
-        <!-- 2. Active Loans Card -->
+        <!-- Active Loans Card -->
         <div class="fade-in-up delay-200 group relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-indigo-500/5 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
             
@@ -139,7 +143,7 @@
             </div>
         </div>
 
-        <!-- 3. Share Capital Card -->
+        <!-- Share Capital Card -->
         <div class="fade-in-up delay-300 group relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-teal-500/5 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10 hover:-translate-y-1">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-28 h-28 bg-teal-500/10 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
             
@@ -164,7 +168,7 @@
             </div>
         </div>
 
-        <!-- 4. Member Grade Card -->
+        <!-- Member Grade Card -->
         <div class="fade-in-up delay-400 group relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-amber-500/5 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 hover:-translate-y-1">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
             
@@ -187,11 +191,11 @@
         </div>
     </div>
 
-    <!-- Main Content Grid -->
+    <!-- 3. Financial Activity & History (3-Column Grid) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         
         <!-- Activity Chart Card (Dynamic ApexCharts) -->
-        <div class="fade-in-up delay-300 lg:col-span-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 sm:p-7 overflow-hidden flex flex-col justify-between">
+        <div class="fade-in-up delay-400 lg:col-span-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 sm:p-7 overflow-hidden flex flex-col justify-between">
             
             <!-- Chart Header -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -222,7 +226,7 @@
         </div>
 
         <!-- Recent Transactions Card -->
-        <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden h-full">
+        <div class="fade-in-up delay-500 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden h-full">
             
             <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
                 <h3 class="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -263,6 +267,40 @@
             </div>
         </div>
     </div>
+
+    <!-- 4. Notices & Support (Bottom Section) -->
+    <div id="latest-notice-card" class="fade-in-up delay-500 grid grid-cols-1 lg:grid-cols-3 gap-4 relative z-10">
+        <!-- Admin Notice -->
+        <div class="lg:col-span-2 bg-white/75 dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800 rounded-[2rem] shadow-lg p-6">
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.28em] font-bold text-slate-400 dark:text-slate-500">Admin Message</p>
+                    <h2 class="text-xl font-black text-slate-900 dark:text-white">Announcements</h2>
+                </div>
+                <span class="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
+                    <i data-lucide="bell" class="w-3.5 h-3.5"></i> Live
+                </span>
+            </div>
+            <div class="rounded-3xl bg-slate-100/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-5">
+                <h3 id="notice-title" class="text-lg font-bold text-slate-900 dark:text-white">Fetching your latest admin notice...</h3>
+                <p id="notice-message" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">This panel will show announcements targeted to you or global notices from the administration.</p>
+                <p id="notice-meta" class="mt-4 text-[11px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 font-semibold"></p>
+            </div>
+        </div>
+        
+        <!-- Support Card -->
+        <div class="bg-white/75 dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800 rounded-[2rem] shadow-lg p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-[0.28em] font-bold text-slate-400 dark:text-slate-500">Need help?</p>
+                <h2 class="text-xl font-black text-slate-900 dark:text-white">Chat with Admin</h2>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-6">Send a message directly if you have questions about loans, savings, or membership benefits.</p>
+            </div>
+            <a href="{% url 'chat' %}" class="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 text-sm font-semibold shadow-lg shadow-emerald-600/20 transition-all">
+                <i data-lucide="send" class="w-4 h-4"></i> Open Chat
+            </a>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -271,6 +309,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.lucide) {
         lucide.createIcons();
     }
+
+    const fetchLatestNotice = async () => {
+        try {
+            const res = await fetch('/api/notifications/', { credentials: 'include' });
+            if (!res.ok) return;
+            const notices = await res.json();
+            const latestNotice = notices.find(n => n.type === 'admin_notice') || notices[0] || null;
+            if (!latestNotice) {
+                document.getElementById('notice-title').textContent = 'No notices available';
+                document.getElementById('notice-message').textContent = 'You are up to date. Admin notifications will appear here when available.';
+                return;
+            }
+
+            const title = latestNotice.title || 'Notice from administration';
+            document.getElementById('notice-title').textContent = title;
+            document.getElementById('notice-message').textContent = latestNotice.message || '';
+            document.getElementById('notice-meta').textContent = latestNotice.expires_at ? `Expires ${latestNotice.expires_at}` : 'No expiration';
+        } catch (err) {
+            console.error('Latest notice fetch failed', err);
+            document.getElementById('notice-title').textContent = 'Unable to load notice';
+            document.getElementById('notice-message').textContent = 'Please refresh the page or try again later.';
+        }
+    };
+
+    fetchLatestNotice();
 
     // 2. Format Currency Helper
     const formatCurrency = (amount) => {

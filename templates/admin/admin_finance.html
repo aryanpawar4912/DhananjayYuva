@@ -1,0 +1,439 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Finance & Accounts | Yuva Admin{% endblock %}
+
+{% block header_title %}Finance & Accounts{% endblock %}
+{% block header_subtitle %}Monitor community funds, view visual analytics, and manage transaction ledgers.{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Quick Financial Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+        <!-- Net Balance -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Net Balance</p>
+                <h3 id="statNetBalance" class="text-2xl font-black text-indigo-600 dark:text-indigo-400">₹0.00</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            </div>
+        </div>
+
+        <!-- Total Income -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Income</p>
+                <h3 id="statTotalIncome" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">₹0.00</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Expenses</p>
+                <h3 id="statTotalExpense" class="text-2xl font-black text-rose-600 dark:text-rose-400">₹0.00</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg>
+            </div>
+        </div>
+
+        <!-- Total Entries -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Entries</p>
+                <h3 id="statEntryCount" class="text-2xl font-black text-amber-600 dark:text-amber-400">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Analytics Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+        <!-- Cash Flow Summary Chart -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">Cash Flow Overview</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Comparison of overall financial inflows and outflows.</p>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="cashFlowChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Breakdown Chart -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">Top Expense Categories</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Breakdown of expenses by category tags.</p>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace Grid: Form & Ledger -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+        
+        <!-- Record New Transaction Form -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm h-fit">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">New Transaction</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Log community income or expense records.</p>
+            
+            <form id="transactionForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Type <span class="text-rose-500">*</span></label>
+                    <select id="txType" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer">
+                        <option value="IN">Income (Credit)</option>
+                        <option value="EX">Expense (Debit)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Title <span class="text-rose-500">*</span></label>
+                    <input type="text" id="txTitle" required placeholder="e.g. Monthly Maintenance" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Category <span class="text-rose-500">*</span></label>
+                    <input type="text" id="txCategory" required placeholder="e.g. Utilities, Events, Collections" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Amount (₹) <span class="text-rose-500">*</span></label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-2.5 text-sm text-slate-400 font-medium">₹</span>
+                        <input type="number" step="0.01" id="txAmount" required placeholder="0.00" class="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Date <span class="text-rose-500">*</span></label>
+                    <input type="date" id="txDate" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+
+                <button type="submit" id="txSubmitBtn" class="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-500/25 transition-all transform active:scale-[0.98] mt-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Save Transaction</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Transaction Ledger Table & Export Card -->
+        <div class="lg:col-span-2 glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col h-full min-h-[450px]">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Transaction Ledger</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Filter, search, and export database history.</p>
+                </div>
+                
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-48">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="txSearchInput" placeholder="Search..." class="block w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                    </div>
+
+                    <!-- Export CSV Button -->
+                    <button id="exportCsvBtn" title="Export to CSV" class="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Export</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto flex-1 custom-scrollbar -mx-6 px-6">
+                <table class="w-full text-left border-collapse min-w-[550px]">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                            <th class="pb-3 px-4">Title / Category</th>
+                            <th class="pb-3 px-4 text-center">Type</th>
+                            <th class="pb-3 px-4 text-right">Amount</th>
+                            <th class="pb-3 px-4 text-right">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                        <tr>
+                            <td colspan="4" class="text-center py-12">
+                                <div class="flex justify-center items-center gap-2 text-slate-400">
+                                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Loading database records...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN loaded correctly before custom scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const API_URLS = {
+        financeApi: "{% url 'admin_finance_api' %}"
+    };
+
+    const currencyFormatter = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2
+    });
+
+    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrftoken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+
+    let transactionsData = [];
+    let cashFlowChartInstance = null;
+    let categoryChartInstance = null;
+
+    document.getElementById('txDate').valueAsDate = new Date();
+
+    // -----------------------------------------
+    // 1. Load Data from Backend API
+    // -----------------------------------------
+    async function loadFinanceData() {
+        try {
+            const response = await fetch(API_URLS.financeApi);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            transactionsData = data.transactions || [];
+            
+            const totalIncome = data.total_income || 0;
+            const totalExpense = data.total_expense || 0;
+            const netBalance = data.net_balance || (totalIncome - totalExpense);
+
+            document.getElementById('statNetBalance').innerText = currencyFormatter.format(netBalance);
+            document.getElementById('statTotalIncome').innerText = currencyFormatter.format(totalIncome);
+            document.getElementById('statTotalExpense').innerText = currencyFormatter.format(totalExpense);
+            document.getElementById('statEntryCount').innerText = transactionsData.length;
+
+            renderTransactionsTable(transactionsData);
+            renderCharts(totalIncome, totalExpense, transactionsData);
+        } catch (error) {
+            console.error('Detailed fetch error:', error);
+            document.getElementById('transactionsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-rose-500 py-8 font-medium">
+                        Error: ${error.message}
+                    </td>
+                </tr>`;
+        }
+    }
+
+    // -----------------------------------------
+    // 2. Render Table Rows
+    // -----------------------------------------
+    function renderTransactionsTable(items) {
+        const tbody = document.getElementById('transactionsTableBody');
+        if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400 font-medium">No transactions found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = items.map(tx => {
+            const isIncome = tx.tx_type === 'IN';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900 dark:text-white">${tx.title}</div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wider">${tx.category || 'General'}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${isIncome ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'}">
+                            <span class="w-1.5 h-1.5 rounded-full ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                            ${isIncome ? 'Income' : 'Expense'}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 font-black ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} text-right">
+                        ${isIncome ? '+' : '-'}${currencyFormatter.format(tx.amount)}
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-right font-medium">${tx.date}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // -----------------------------------------
+    // 3. Render Chart.js Graphs
+    // -----------------------------------------
+    function renderCharts(income, expense, transactions) {
+        const ctxCash = document.getElementById('cashFlowChart').getContext('2d');
+        if (cashFlowChartInstance) cashFlowChartInstance.destroy();
+
+        cashFlowChartInstance = new Chart(ctxCash, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Expenses'],
+                datasets: [{
+                    data: [income, expense],
+                    backgroundColor: ['#10b981', '#f43f5e'],
+                    borderRadius: 12,
+                    barThickness: 45
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' } } }
+                }
+            }
+        });
+
+        const categoryMap = {};
+        transactions.filter(t => t.tx_type === 'EX').forEach(t => {
+            const cat = t.category || 'Uncategorized';
+            categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
+        });
+
+        const catLabels = Object.keys(categoryMap);
+        const catValues = Object.values(categoryMap);
+
+        const ctxCat = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChartInstance) categoryChartInstance.destroy();
+
+        categoryChartInstance = new Chart(ctxCat, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels.length ? catLabels : ['No Expenses'],
+                datasets: [{
+                    data: catValues.length ? catValues : [1],
+                    backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#3b82f6', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // -----------------------------------------
+    // 4. Form Submission (POST to Database)
+    // -----------------------------------------
+    document.getElementById('transactionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('txSubmitBtn');
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Saving...</span>`;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+        const payload = {
+            tx_type: document.getElementById('txType').value,
+            title: document.getElementById('txTitle').value.trim(),
+            category: document.getElementById('txCategory').value.trim(),
+            amount: parseFloat(document.getElementById('txAmount').value),
+            date: document.getElementById('txDate').value
+        };
+
+        try {
+            const response = await fetch(API_URLS.financeApi, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                document.getElementById('transactionForm').reset();
+                document.getElementById('txDate').valueAsDate = new Date();
+                await loadFinanceData();
+                if (typeof showSuccess === 'function') showSuccess('Transaction logged successfully!');
+            } else {
+                const err = await response.json();
+                if (typeof showError === 'function') showError('Error: ' + (err.detail || 'Could not save transaction.'));
+            }
+        } catch (error) {
+            console.error('Error adding transaction:', error);
+            if (typeof showError === 'function') showError('Network error while saving transaction.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+    });
+
+    // -----------------------------------------
+    // 5. Search & Filter
+    // -----------------------------------------
+    document.getElementById('txSearchInput').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const filtered = transactionsData.filter(tx => 
+            (tx.title && tx.title.toLowerCase().includes(query)) || 
+            (tx.category && tx.category.toLowerCase().includes(query)) ||
+            (tx.date && tx.date.includes(query))
+        );
+        renderTransactionsTable(filtered);
+    });
+
+    // -----------------------------------------
+    // 6. CSV Export Utility
+    // -----------------------------------------
+    document.getElementById('exportCsvBtn').addEventListener('click', function() {
+        if (transactionsData.length === 0) {
+            alert('No data available to export.');
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,ID,Title,Category,Type,Amount,Date\r\n";
+        transactionsData.forEach(tx => {
+            let row = [tx.id, `"${tx.title}"`, `"${tx.category}"`, tx.tx_type, tx.amount, tx.date].join(",");
+            csvContent += row + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "finance_ledger.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', loadFinanceData);
+</script>
+{% endblock %}

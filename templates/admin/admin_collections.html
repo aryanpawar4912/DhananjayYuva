@@ -1,0 +1,493 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Collections & Rental Management | Yuva Admin{% endblock %}
+
+{% block header_title %}Collections & Rental Management{% endblock %}
+{% block header_subtitle %}Manage rental equipment inventory, monitor security deposits, and track weekly community collections.{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Quick Stats Cards Bar -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Collections</p>
+                <h3 id="statTotalCollections" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">₹0.00</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+        </div>
+        
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rental Items</p>
+                <h3 id="statTotalItems" class="text-2xl font-black text-indigo-600 dark:text-indigo-400">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+        </div>
+        
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Available for Rent</p>
+                <h3 id="statAvailableItems" class="text-2xl font-black text-sky-600 dark:text-sky-400">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/10 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+            </div>
+        </div>
+        
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-center justify-between group">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rental History Logs</p>
+                <h3 id="statRentalHistoryCount" class="text-2xl font-black text-amber-600 dark:text-amber-400">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-200 dark:border-slate-800 gap-8 overflow-x-auto custom-scrollbar">
+        <button onclick="switchTab('rentals')" id="tab-btn-rentals" class="pb-3 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 transition-colors flex items-center gap-2 whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            Rental Inventory
+        </button>
+        <button onclick="switchTab('history')" id="tab-btn-history" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors flex items-center gap-2 whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            Rental Request History
+        </button>
+        <button onclick="switchTab('collections')" id="tab-btn-collections" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors flex items-center gap-2 whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Weekly Collections
+        </button>
+    </div>
+
+    <!-- Tab 1: Rental Inventory Pane -->
+    <div id="pane-rentals" class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm h-fit">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">New Rental Item</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Add equipment with rental fees and security deposits.</p>
+            
+            <form id="rentalItemForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Item Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="itemName" required placeholder="e.g. Water Pump / Tent" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Description</label>
+                    <textarea id="itemDescription" rows="2" placeholder="Item details, model..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Rental Fee (₹) <span class="text-rose-500">*</span></label>
+                    <input type="number" step="0.01" id="itemPrice" required placeholder="0.00" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Deposit Fee (₹) <span class="text-rose-500">*</span></label>
+                    <input type="number" step="0.01" id="itemDeposit" required placeholder="0.00" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div class="flex items-center gap-3 pt-2">
+                    <input type="checkbox" id="itemAvailable" checked class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                    <label for="itemAvailable" class="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">Mark Available for Rent</label>
+                </div>
+                <button type="submit" id="rentalSubmitBtn" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-500/25 transition-all">
+                    Save Rental Item
+                </button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col h-full min-h-[400px]">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Current Inventory</h3>
+                <input type="text" id="rentalSearchInput" placeholder="Search inventory..." class="block w-full sm:w-64 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+            </div>
+
+            <div class="overflow-x-auto flex-1 custom-scrollbar -mx-6 px-6">
+                <table class="w-full text-left border-collapse min-w-[650px]">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                            <th class="pb-3 px-4">Item Name</th>
+                            <th class="pb-3 px-4">Fees & Deposit</th>
+                            <th class="pb-3 px-4 text-center">Status</th>
+                            <th class="pb-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rentalItemsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                        <tr><td colspan="4" class="text-center py-12 text-slate-400">Loading inventory...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Rental History Pane -->
+    <div id="pane-history" class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hidden min-h-[400px]">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Rental Equipment History Logs</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review member equipment bookings, duration, and associated deposits.</p>
+            </div>
+            <input type="text" id="historySearchInput" placeholder="Filter member or item..." class="block w-full sm:w-72 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar -mx-6 px-6">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-700/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th class="pb-3 px-4">Member Name</th>
+                        <th class="pb-3 px-4">Item Rented</th>
+                        <th class="pb-3 px-4 text-right">Fee / Deposit</th>
+                        <th class="pb-3 px-4 text-center">Rental Status</th>
+                        <th class="pb-3 px-4 text-right">Requested Date</th>
+                    </tr>
+                </thead>
+                <tbody id="rentalHistoryTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                    <tr><td colspan="5" class="text-center py-12 text-slate-400">Loading history logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab 3: Weekly Collections Pane -->
+    <div id="pane-collections" class="glass-panel bg-white/80 dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hidden min-h-[400px]">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Collection Payment History</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">View recent weekly payments recorded across members.</p>
+            </div>
+            <input type="text" id="collectionSearchInput" placeholder="Filter ID, Name..." class="block w-full sm:w-72 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar -mx-6 px-6">
+            <table class="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-700/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th class="pb-3 px-4 w-32">Transaction ID</th>
+                        <th class="pb-3 px-4">Member Name</th>
+                        <th class="pb-3 px-4 text-right">Amount Paid</th>
+                        <th class="pb-3 px-4 text-right">Payment Date</th>
+                    </tr>
+                </thead>
+                <tbody id="collectionsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                    <tr><td colspan="4" class="text-center py-12 text-slate-400">Loading collections...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- IN-PAGE EDIT MODAL DIALOG -->
+<div id="editItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="glass-panel bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-md mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Edit Rental Item</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form id="editRentalItemForm" class="space-y-4">
+            <input type="hidden" id="editItemId">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Item Name *</label>
+                <input type="text" id="editItemName" required class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea id="editItemDescription" rows="2" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Rental Fee (₹) *</label>
+                    <input type="number" step="0.01" id="editItemPrice" required class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Deposit (₹) *</label>
+                    <input type="number" step="0.01" id="editItemDeposit" required class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="flex items-center gap-3 pt-1">
+                <input type="checkbox" id="editItemAvailable" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
+                <label for="editItemAvailable" class="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">Available for Rent</label>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeEditModal()" class="w-1/2 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-all">Cancel</button>
+                <button type="submit" id="editSubmitBtn" class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-md transition-all">Update Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_URLS = {
+        rentalItems: "{% url 'admin_rental_items_api' %}",
+        collections: "{% url 'admin_collections_api' %}"
+    };
+
+    function switchTab(tabName) {
+        const panes = ['rentals', 'history', 'collections'];
+        panes.forEach(pane => {
+            const el = document.getElementById(`pane-${pane}`);
+            const btn = document.getElementById(`tab-btn-${pane}`);
+            const activeClass = "pb-3 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 transition-colors flex items-center gap-2 whitespace-nowrap";
+            const inactiveClass = "pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors flex items-center gap-2 whitespace-nowrap";
+
+            if (pane === tabName) {
+                el.classList.remove('hidden');
+                el.classList.add('animate-fade-in');
+                btn.className = activeClass;
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('animate-fade-in');
+                btn.className = inactiveClass;
+            }
+        });
+    }
+
+    const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrftoken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+
+    let rentalItemsData = [];
+    let rentalHistoryData = [];
+    let collectionsData = [];
+
+    async function loadData() {
+        try {
+            const res = await fetch(API_URLS.rentalItems);
+            if (!res.ok) throw new Error('Failed to fetch data');
+            const data = await res.json();
+            
+            rentalItemsData = data.rental_items || [];
+            rentalHistoryData = data.rental_history || [];
+
+            document.getElementById('statTotalItems').innerText = rentalItemsData.length;
+            document.getElementById('statAvailableItems').innerText = rentalItemsData.filter(i => i.is_available).length;
+            document.getElementById('statRentalHistoryCount').innerText = rentalHistoryData.length;
+
+            renderRentalTable(rentalItemsData);
+            renderHistoryTable(rentalHistoryData);
+        } catch (err) {
+            console.error('Error loading inventory:', err);
+        }
+
+        try {
+            const colRes = await fetch(API_URLS.collections);
+            if (colRes.ok) {
+                const colData = await colRes.json();
+                collectionsData = colData.collections || [];
+                document.getElementById('statTotalCollections').innerText = currencyFormatter.format(colData.total_collections || 0);
+                renderCollectionsTable(collectionsData);
+            }
+        } catch (err) {
+            console.error('Error loading collections:', err);
+        }
+    }
+
+    function renderRentalTable(items) {
+        const tbody = document.getElementById('rentalItemsTableBody');
+        if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400 font-medium">No inventory items found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                    ${item.name}
+                    <div class="text-xs font-normal text-slate-500 truncate max-w-xs">${item.description || 'No description'}</div>
+                </td>
+                <td class="py-3.5 px-4 text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Fee: <strong class="text-slate-900 dark:text-white">${currencyFormatter.format(item.rental_fee || item.rental_price || 0)}</strong><br>
+                    Deposit: <span class="text-indigo-600 dark:text-indigo-400">${currencyFormatter.format(item.deposit_fee || 0)}</span>
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${item.is_available ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${item.is_available ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                        ${item.is_available ? 'Available' : 'Rented out'}
+                    </span>
+                </td>
+                <td class="py-3.5 px-4 text-right space-x-2">
+                    <button onclick="openEditModal(${item.id})" class="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-bold transition-all">Edit</button>
+                    <button onclick="deleteItem(${item.id})" class="px-3 py-1 bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderHistoryTable(history) {
+        const tbody = document.getElementById('rentalHistoryTableBody');
+        if (history.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400 font-medium">No rental history records found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = history.map(h => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">${h.member_name}</td>
+                <td class="py-3.5 px-4 font-medium text-indigo-600 dark:text-indigo-400">${h.item_name}</td>
+                <td class="py-3.5 px-4 text-right text-xs">
+                    Fee: ${currencyFormatter.format(h.rental_fee)}<br>Deposit: ${currencyFormatter.format(h.deposit_fee)}
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400">${h.status}</span>
+                </td>
+                <td class="py-3.5 px-4 text-right text-xs text-slate-500">${h.created_at}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderCollectionsTable(collections) {
+        const tbody = document.getElementById('collectionsTableBody');
+        if (collections.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400 font-medium">No collection records found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = collections.map(col => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3.5 px-4"><span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 font-mono text-xs rounded">#${col.id}</span></td>
+                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">${col.member_username || 'Member ID: ' + col.member}</td>
+                <td class="py-3.5 px-4 font-black text-emerald-600 dark:text-emerald-400 text-right">${currencyFormatter.format(col.amount)}</td>
+                <td class="py-3.5 px-4 text-slate-500 text-right text-xs">${col.payment_date}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Modal Edit Operations
+    function openEditModal(id) {
+        const item = rentalItemsData.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('editItemId').value = item.id;
+        document.getElementById('editItemName').value = item.name;
+        document.getElementById('editItemDescription').value = item.description || '';
+        document.getElementById('editItemPrice').value = item.rental_fee || item.rental_price || 0;
+        document.getElementById('editItemDeposit').value = item.deposit_fee || 0;
+        document.getElementById('editItemAvailable').checked = item.is_available;
+
+        document.getElementById('editItemModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editItemModal').classList.add('hidden');
+    }
+
+    document.getElementById('editRentalItemForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editItemId').value;
+        const payload = {
+            name: document.getElementById('editItemName').value.trim(),
+            description: document.getElementById('editItemDescription').value.trim(),
+            rental_fee: parseFloat(document.getElementById('editItemPrice').value),
+            deposit_fee: parseFloat(document.getElementById('editItemDeposit').value),
+            is_available: document.getElementById('editItemAvailable').checked
+        };
+
+        const baseUrl = API_URLS.rentalItems.endsWith('/') ? API_URLS.rentalItems : API_URLS.rentalItems + '/';
+
+        try {
+            const res = await fetch(`${baseUrl}${id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                closeEditModal();
+                loadData();
+            } else {
+                alert('Failed to update item.');
+            }
+        } catch (err) {
+            console.error('Error updating:', err);
+        }
+    });
+
+    async function deleteItem(id) {
+        if (!confirm('Are you sure you want to delete this rental item?')) return;
+        const baseUrl = API_URLS.rentalItems.endsWith('/') ? API_URLS.rentalItems : API_URLS.rentalItems + '/';
+        try {
+            const res = await fetch(`${baseUrl}${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrftoken }
+            });
+            if (res.ok) {
+                loadData();
+            } else {
+                alert('Could not delete item.');
+            }
+        } catch (err) {
+            console.error('Error deleting:', err);
+        }
+    }
+
+    document.getElementById('rentalItemForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('itemName').value.trim(),
+            description: document.getElementById('itemDescription').value.trim(),
+            rental_fee: parseFloat(document.getElementById('itemPrice').value),
+            deposit_fee: parseFloat(document.getElementById('itemDeposit').value),
+            is_available: document.getElementById('itemAvailable').checked
+        };
+
+        try {
+            const res = await fetch(API_URLS.rentalItems, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                document.getElementById('rentalItemForm').reset();
+                document.getElementById('itemAvailable').checked = true;
+                loadData();
+            }
+        } catch (err) {
+            console.error('Error saving item:', err);
+        }
+    });
+
+    // Client-side quick filter logic
+    document.getElementById('rentalSearchInput')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const filtered = rentalItemsData.filter(i => i.name.toLowerCase().includes(term) || (i.description && i.description.toLowerCase().includes(term)));
+        renderRentalTable(filtered);
+    });
+
+    document.getElementById('historySearchInput')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const filtered = rentalHistoryData.filter(h => h.member_name.toLowerCase().includes(term) || h.item_name.toLowerCase().includes(term));
+        renderHistoryTable(filtered);
+    });
+
+    document.getElementById('collectionSearchInput')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const filtered = collectionsData.filter(c => String(c.id).includes(term) || (c.member_username && c.member_username.toLowerCase().includes(term)));
+        renderCollectionsTable(filtered);
+    });
+
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+{% endblock %}

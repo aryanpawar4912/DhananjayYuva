@@ -1,0 +1,498 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Manage Meetings | Yuva Portal{% endblock %}
+
+{% block breadcrumb_current %}Meeting Schedules{% endblock %}
+
+{% block header_title %}
+    <div class="flex items-center gap-3">
+        <div class="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 shadow-lg shadow-indigo-500/30 ring-2 ring-white/20 dark:ring-slate-800/40 animate-pulse">
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">Meeting Management</span>
+                <span class="hidden sm:inline-flex items-center gap-1.5 text-[11px] bg-gradient-to-r from-indigo-500/15 to-purple-500/15 text-indigo-700 dark:text-indigo-300 font-extrabold px-3 py-1 rounded-full border border-indigo-500/30 shadow-sm backdrop-blur-md">
+                    Co-op Schedules
+                </span>
+            </div>
+            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">Schedule upcoming cooperative meetings, track gatherings, and review logs.</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 md:space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
+
+    <!-- Top Grid: Stats Overview -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        
+        <!-- Total Meetings Card -->
+        <div class="group relative glass-panel p-5 md:p-6 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-indigo-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-indigo-950/20 backdrop-blur-xl flex items-center justify-between transition-transform hover:-translate-y-1 duration-300">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-2">
+                    Total Meetings
+                </span>
+                <h3 id="totalMeetingsCount" class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">0</h3>
+            </div>
+            <div class="p-3.5 md:p-4 rounded-2xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+            </div>
+        </div>
+        
+        <!-- Dynamic Session Status Card -->
+        <div class="group relative glass-panel p-5 md:p-6 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-slate-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-slate-950/20 backdrop-blur-xl flex items-center justify-between transition-transform hover:-translate-y-1 duration-300">
+            <div>
+                <span id="statusLabel" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 mb-2 transition-colors">
+                    Session Status
+                </span>
+                <h3 id="latestMeetingStatus" class="text-xl md:text-2xl font-black text-slate-900 dark:text-white transition-colors">Loading...</h3>
+            </div>
+            <div id="statusIconContainer" class="p-3.5 md:p-4 rounded-2xl bg-slate-500/10 text-slate-500 border border-slate-500/20 transition-colors">
+                <svg id="statusIcon" class="w-6 h-6 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+
+        <!-- System Protocol Card -->
+        <div class="group relative glass-panel p-5 md:p-6 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-purple-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-purple-950/20 backdrop-blur-xl flex items-center justify-between transition-transform hover:-translate-y-1 duration-300 sm:col-span-2 lg:col-span-1">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 mb-2">
+                    System Protocol
+                </span>
+                <h3 class="text-xl md:text-2xl font-black text-slate-900 dark:text-white">Verified Log</h3>
+            </div>
+            <div class="p-3.5 md:p-4 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace: Form & List -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+        
+        <!-- Create Meeting Form -->
+        <div class="xl:col-span-4 glass-panel p-5 md:p-6 rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col h-fit">
+            <h3 class="text-sm md:text-base font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-5 flex items-center gap-2">
+                <div class="p-1.5 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg">
+                    <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                Schedule New Meeting
+            </h3>
+            
+            <form id="createMeetingForm" class="space-y-4 md:space-y-5">
+                <div>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Meeting Title</label>
+                    <input type="text" id="meetingTitle" required placeholder="e.g. Weekly Financial Meet" class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Date & Time</label>
+                    <input type="datetime-local" id="meetingDate" required class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Location / Venue</label>
+                    <input type="text" id="meetingLocation" placeholder="e.g. Community Center Hall" class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] md:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Agenda / Description</label>
+                    <textarea id="meetingDescription" rows="3" placeholder="Brief outline of meeting topics..." class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"></textarea>
+                </div>
+
+                <button type="submit" id="submitCreateBtn" class="w-full py-3.5 mt-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Publish Schedule</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Meeting Schedule Log Table -->
+        <div class="xl:col-span-8 glass-panel rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col overflow-hidden h-full">
+            <div class="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
+                <h3 class="text-sm md:text-base font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Scheduled Gatherings</h3>
+                <span id="meetingCountBadge" class="text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">0 loaded</span>
+            </div>
+
+            <div class="flex-1 overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                        <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-[11px] md:text-xs font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="p-4 md:p-5">Title & Venue</th>
+                            <th class="p-4 md:p-5">Date & Time</th>
+                            <th class="p-4 md:p-5 text-center">Attendance</th>
+                            <th class="p-4 md:p-5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meetingsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs md:text-sm text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <td colspan="4" class="p-10 text-center">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400 mb-3"></div>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Loading meeting records...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- EDIT MEETING MODAL -->
+<div id="editMeetingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-white/40 dark:border-slate-800/80 shadow-2xl transform scale-95 transition-transform duration-300">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <h3 class="text-lg font-black text-slate-900 dark:text-white">Edit Meeting</h3>
+            <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="editMeetingForm" class="space-y-4">
+                <input type="hidden" id="editMeetingId">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Meeting Title</label>
+                    <input type="text" id="editMeetingTitle" required class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Date & Time</label>
+                    <input type="datetime-local" id="editMeetingDate" required class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Location / Venue</label>
+                    <input type="text" id="editMeetingLocation" class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Agenda</label>
+                    <textarea id="editMeetingDescription" rows="3" class="w-full px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"></textarea>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeEditModal()" class="w-1/2 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                    <button type="submit" id="submitEditBtn" class="w-1/2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-colors disabled:opacity-50">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Toast Notification Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+<script>
+    // Global state
+    let globalMeetings = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const createMeetingForm = document.getElementById('createMeetingForm');
+        const editMeetingForm = document.getElementById('editMeetingForm');
+        const meetingsTableBody = document.getElementById('meetingsTableBody');
+        
+        // --- Toast System ---
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const isSuccess = type === 'success';
+            const bgClass = isSuccess ? 'bg-emerald-500/90 dark:bg-emerald-600/90 border-emerald-400/50' : 'bg-rose-500/90 dark:bg-rose-600/90 border-rose-400/50';
+            const icon = isSuccess 
+                ? `<svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border ${bgClass} text-white text-sm font-medium transform transition-all duration-500 translate-y-full opacity-0 max-w-sm pointer-events-auto`;
+            toast.innerHTML = `${icon} <span>${escapeHtml(message)}</span>`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('translate-y-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 3500);
+        };
+
+        // --- Fetch & Render ---
+        window.fetchMeetings = function() {
+            fetch('/admin-panel/api/admin/meetings/', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                globalMeetings = Array.isArray(data) ? data : (data.meetings || []);
+                renderMeetings(globalMeetings);
+                updateLatestStatus(globalMeetings);
+                document.getElementById('totalMeetingsCount').textContent = globalMeetings.length;
+                document.getElementById('meetingCountBadge').textContent = `${globalMeetings.length} loaded`;
+            })
+            .catch(err => {
+                console.error('Error fetching meetings:', err);
+                meetingsTableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-rose-500 font-medium">Failed to load meeting records.</td></tr>`;
+            });
+        };
+
+        function renderMeetings(meetings) {
+            if (!meetings || meetings.length === 0) {
+                meetingsTableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 font-medium">No meetings scheduled yet.</td></tr>`;
+                return;
+            }
+
+            meetingsTableBody.innerHTML = meetings.map(m => {
+                const dateObj = m.date ? new Date(m.date) : null;
+                const formattedDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                const formattedTime = dateObj && !isNaN(dateObj) ? dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+
+                return `
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                    <td class="p-4 md:p-5">
+                        <div class="font-bold text-slate-900 dark:text-white line-clamp-1">${escapeHtml(m.title || 'Untitled Meeting')}</div>
+                        <div class="text-xs text-slate-500 mt-1 flex items-center gap-1 line-clamp-1">
+                            <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            ${escapeHtml(m.location || 'No venue specified')}
+                        </div>
+                    </td>
+                    <td class="p-4 md:p-5 text-slate-700 dark:text-slate-300">
+                        <div class="font-semibold">${formattedDate}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${formattedTime}</div>
+                    </td>
+                    <td class="p-4 md:p-5 text-center">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+                            ${m.present_count || 0} / ${m.total_attendance || 0} Attended
+                        </span>
+                    </td>
+                    <td class="p-4 md:p-5 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="/admin-panel/attendance/?meeting_id=${m.id}" title="Roll Call" class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                            </a>
+                            <button type="button" onclick="openEditModal(${m.id})" title="Edit Meeting" class="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button type="button" onclick="deleteMeeting(${m.id})" title="Delete Meeting" class="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // --- Update Dynamic Session Status Card ---
+        function updateLatestStatus(meetings) {
+            const statusText = document.getElementById('latestMeetingStatus');
+            const statusLabel = document.getElementById('statusLabel');
+            const iconContainer = document.getElementById('statusIconContainer');
+
+            if (!meetings || meetings.length === 0) {
+                statusText.textContent = 'No Schedule';
+                return;
+            }
+
+            const now = new Date();
+            // Find upcoming or active meetings
+            const sorted = [...meetings].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const upcoming = sorted.find(m => new Date(m.date) >= now);
+
+            if (upcoming) {
+                const meetingDate = new Date(upcoming.date);
+                const diffMin = Math.round((meetingDate - now) / 60000);
+
+                if (diffMin <= 30 && diffMin >= -120) { // Active/In Progress Window
+                    statusText.textContent = 'Active Session';
+                    statusLabel.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mb-2';
+                    iconContainer.className = 'p-3.5 md:p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+                } else {
+                    statusText.textContent = 'Upcoming Meet';
+                    statusLabel.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-2';
+                    iconContainer.className = 'p-3.5 md:p-4 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20';
+                }
+            } else {
+                statusText.textContent = 'All Concluded';
+                statusLabel.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-extrabold uppercase tracking-widest bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 mb-2';
+                iconContainer.className = 'p-3.5 md:p-4 rounded-2xl bg-slate-500/10 text-slate-500 border border-slate-500/20';
+            }
+        }
+
+        // --- Create Meeting Form Submit ---
+        if (createMeetingForm) {
+            createMeetingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('submitCreateBtn');
+                btn.disabled = true;
+
+                let dateVal = document.getElementById('meetingDate').value;
+                if (dateVal && dateVal.length === 16) {
+                    dateVal += ':00';
+                }
+
+                const payload = {
+                    title: document.getElementById('meetingTitle').value.trim(),
+                    date: dateVal,
+                    location: document.getElementById('meetingLocation').value.trim(),
+                    description: document.getElementById('meetingDescription').value.trim()
+                };
+
+                fetch('/admin-panel/api/admin/meetings/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-CSRFToken': getCookie('csrftoken') 
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(async (res) => {
+                    const data = await res.json();
+                    if (res.ok && (data.success || data.id || data.meeting)) {
+                        createMeetingForm.reset();
+                        fetchMeetings();
+                        showToast('Meeting scheduled successfully!', 'success');
+                    } else {
+                        showToast(data.error || 'Failed to create meeting.', 'error');
+                    }
+                })
+                .catch(() => showToast('Network error while creating meeting.', 'error'))
+                .finally(() => { btn.disabled = false; });
+            });
+        }
+
+        // --- Edit Form Submit Handler (Single Listener) ---
+        if (editMeetingForm) {
+            editMeetingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('submitEditBtn');
+                btn.disabled = true;
+
+                const id = document.getElementById('editMeetingId').value;
+                let dateVal = document.getElementById('editMeetingDate').value;
+                
+                if (dateVal && dateVal.length === 16) {
+                    dateVal += ':00';
+                }
+
+                const payload = {
+                    title: document.getElementById('editMeetingTitle').value.trim(),
+                    date: dateVal,
+                    location: document.getElementById('editMeetingLocation').value.trim(),
+                    description: document.getElementById('editMeetingDescription').value.trim()
+                };
+
+                fetch(`/admin-panel/api/admin/meetings/?id=${id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-CSRFToken': getCookie('csrftoken') 
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(async (res) => {
+                    const data = await res.json();
+                    if (res.ok && (data.success || data.id || data.message)) {
+                        closeEditModal();
+                        fetchMeetings();
+                        showToast('Meeting updated successfully!', 'success');
+                    } else {
+                        showToast(data.error || 'Validation error updating meeting.', 'error');
+                    }
+                })
+                .catch(() => showToast('Network error while updating.', 'error'))
+                .finally(() => { btn.disabled = false; });
+            });
+        }
+
+        // Load initial state
+        fetchMeetings();
+    });
+
+    // --- Modal Control Functions ---
+    window.openEditModal = function(id) {
+        const meeting = globalMeetings.find(m => m.id === id);
+        if (!meeting) return;
+        
+        document.getElementById('editMeetingId').value = meeting.id;
+        document.getElementById('editMeetingTitle').value = meeting.title || '';
+        
+        if (meeting.date) {
+            const d = new Date(meeting.date);
+            if (!isNaN(d)) {
+                const pad = (num) => String(num).padStart(2, '0');
+                const formattedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                document.getElementById('editMeetingDate').value = formattedDate;
+            }
+        }
+        
+        document.getElementById('editMeetingLocation').value = meeting.location || '';
+        document.getElementById('editMeetingDescription').value = meeting.description || '';
+
+        const modal = document.getElementById('editMeetingModal');
+        const modalContent = modal.querySelector('div');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }, 10);
+    };
+
+    window.closeEditModal = function() {
+        const modal = document.getElementById('editMeetingModal');
+        const modalContent = modal.querySelector('div');
+        
+        modal.classList.add('opacity-0');
+        modalContent.classList.remove('scale-100');
+        modalContent.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('editMeetingForm').reset();
+        }, 300);
+    };
+
+    // --- Delete Function ---
+    window.deleteMeeting = function(id) {
+        if (confirm("⚠️ Are you sure you want to permanently delete this meeting? This action cannot be undone.")) {
+            fetch(`/admin-panel/api/admin/meetings/?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success || data.message) {
+                    fetchMeetings();
+                    showToast('Meeting deleted successfully.', 'success');
+                } else {
+                    showToast(data.error || 'Failed to delete meeting.', 'error');
+                }
+            })
+            .catch(() => showToast('Network error while deleting.', 'error'));
+        }
+    };
+
+    // --- Utility Helpers ---
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

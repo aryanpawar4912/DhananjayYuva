@@ -1,0 +1,247 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Yuva Admin - Group Reports{% endblock %}
+
+{% block header_title %}Group Reports & Analytics{% endblock %}
+{% block header_subtitle %}Comprehensive dynamic executive summary of collections, dues compliance, budget variances, and financial logs.{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center gap-3">
+    <!-- Print / PDF Export Button -->
+    <button onclick="window.print()" class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-semibold transition-all duration-300 flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span class="hidden sm:inline">Print / PDF Report</span>
+    </button>
+
+    <!-- Refresh Reports Button -->
+    <button onclick="loadAdminReportData()" class="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all duration-300 flex items-center gap-2 active:scale-95 border border-indigo-500/30">
+        <svg class="w-4 h-4 transition-transform duration-700 hover:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span class="hidden sm:inline">Refresh Reports</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" id="reportPrintContainer">
+    
+    <!-- Top-Level Summary Metrics Cards (Fully Dynamic) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">Total Collections</h3>
+            <p class="text-3xl font-bold text-slate-900 dark:text-white" id="report-total-collections">--</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Total amount collected from periodic dues.</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">Net Balance</h3>
+            <p class="text-3xl font-bold text-slate-900 dark:text-white" id="report-net-balance">--</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Overall income minus expenses.</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">Attendance Fines</h3>
+            <p class="text-3xl font-bold text-slate-900 dark:text-white" id="report-total-fines">--</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Accumulated fines from absent members.</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">Dues Compliance</h3>
+            <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400" id="report-compliance-rate">--%</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Members with paid active dues status.</p>
+        </div>
+    </div>
+
+    <!-- Middle Section: Weekly Collections & Budget Variance Analysis -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <!-- Weekly Collections Table -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Weekly Collections Report</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Recent collections categorized by week number.</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                    <thead class="border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-[0.15em] text-[11px]">
+                        <tr>
+                            <th class="px-4 py-3">Week</th>
+                            <th class="px-4 py-3">Total Collected</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-weekly-table" class="divide-y divide-slate-200 dark:divide-slate-800">
+                        <tr><td colspan="2" class="px-4 py-4 text-center text-slate-400 text-xs">Loading weekly data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Category Budget Variance Analysis -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Budget Variance Analysis</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Actual spending compared against target allocations.</p>
+                </div>
+            </div>
+            <div class="space-y-4" id="report-budget-variance">
+                <p class="text-sm text-slate-400 text-center py-4">Loading budget variance data...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Top Benefactors & Latest Financial Entries -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <!-- Top Contributors / Benefactors Table -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Top Contributors & Benefactors</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Members leading community fundraising support.</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                    <thead class="border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-[0.15em] text-[11px]">
+                        <tr>
+                            <th class="px-4 py-3">Member Name</th>
+                            <th class="px-4 py-3 text-right">Total Contributed</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-contributors-table" class="divide-y divide-slate-200 dark:divide-slate-800">
+                        <tr><td colspan="2" class="px-4 py-6 text-center text-slate-400">Loading contributor insights...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Latest Income / Expense Entries List -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Latest Financial Ledger Entries</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Most recent transaction movements recorded.</p>
+                </div>
+            </div>
+            <div class="space-y-3 max-h-[320px] overflow-y-auto pr-1" id="report-finance-list">
+                <p class="text-sm text-slate-400 text-center py-4">Loading financial entries...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadAdminReportData() {
+        try {
+            const response = await fetch('/admin-panel/api/reports/', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) {
+                console.error('Failed to load admin report data', response.status);
+                return;
+            }
+            const data = await response.json();
+            
+            // 1. Populate Metric KPIs dynamically
+            document.getElementById('report-total-collections').innerText = `₹${Number(data.total_collections || 0).toLocaleString('en-IN')}`;
+            document.getElementById('report-net-balance').innerText = `₹${Number(data.net_balance || 0).toLocaleString('en-IN')}`;
+            document.getElementById('report-total-fines').innerText = `₹${Number(data.total_fines || 0).toLocaleString('en-IN')}`;
+            document.getElementById('report-compliance-rate').innerText = `${data.compliance_rate || 0}%`;
+
+            // 2. Populate Weekly Collections Table dynamically
+            const weeklyBody = document.getElementById('report-weekly-table');
+            weeklyBody.innerHTML = '';
+            if (Array.isArray(data.weekly_collection_report) && data.weekly_collection_report.length > 0) {
+                data.weekly_collection_report.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">Week ${item.week}</td>
+                        <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">₹${Number(item.total).toLocaleString('en-IN')}</td>
+                    `;
+                    weeklyBody.appendChild(row);
+                });
+            } else {
+                weeklyBody.innerHTML = `<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400 text-xs">No weekly collection records found.</td></tr>`;
+            }
+
+            // 3. Populate Budget Variance Analysis dynamically
+            const budgetContainer = document.getElementById('report-budget-variance');
+            budgetContainer.innerHTML = '';
+            if (Array.isArray(data.budget_variances) && data.budget_variances.length > 0) {
+                data.budget_variances.forEach(b => {
+                    const percentage = Math.min(Math.round((b.actual / (b.budget || 1)) * 100), 100);
+                    const barColor = percentage > 90 ? 'bg-rose-500' : 'bg-indigo-600';
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'space-y-1.5';
+                    itemEl.innerHTML = `
+                        <div class="flex justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <span>${b.category}</span>
+                            <span>₹${Number(b.actual).toLocaleString('en-IN')} / <span class="text-slate-400">₹${Number(b.budget).toLocaleString('en-IN')} Budget</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                            <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+                    budgetContainer.appendChild(itemEl);
+                });
+            } else {
+                budgetContainer.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No budget variance data available from backend.</p>';
+            }
+
+            // 4. Populate Top Contributors Table dynamically
+            const contribBody = document.getElementById('report-contributors-table');
+            contribBody.innerHTML = '';
+            if (Array.isArray(data.top_contributors) && data.top_contributors.length > 0) {
+                data.top_contributors.forEach(c => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">${c.name}</td>
+                        <td class="px-4 py-3 font-bold text-indigo-600 dark:text-indigo-400 text-right">₹${Number(c.total).toLocaleString('en-IN')}</td>
+                    `;
+                    contribBody.appendChild(row);
+                });
+            } else {
+                contribBody.innerHTML = `<tr><td colspan="2" class="px-4 py-6 text-center text-slate-400 text-xs">No top contributor data found.</td></tr>`;
+            }
+
+            // 5. Populate Financial Entries List dynamically
+            const financeList = document.getElementById('report-finance-list');
+            financeList.innerHTML = '';
+            if (Array.isArray(data.latest_finance_entries) && data.latest_finance_entries.length > 0) {
+                data.latest_finance_entries.forEach(entry => {
+                    const isIncome = entry.entry_type === 'income' || entry.entry_type === 'IN';
+                    const badgeClass = isIncome
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-300 border border-rose-500/20';
+
+                    const element = document.createElement('div');
+                    element.className = 'p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70';
+                    element.innerHTML = `
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">${entry.category || 'General'}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${entry.description || entry.title || 'No description provided'}</p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}">${(entry.entry_type || 'IN').toUpperCase()}</span>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between gap-4">
+                            <span class="text-sm font-semibold text-slate-900 dark:text-white">₹${Number(entry.amount).toLocaleString('en-IN')}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">${entry.date}</span>
+                        </div>
+                    `;
+                    financeList.appendChild(element);
+                });
+            } else {
+                financeList.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">No recent finance entries are available.</p>';
+            }
+        } catch (err) {
+            console.error('Unable to fetch report data', err);
+        }
+    }
+
+    loadAdminReportData();
+</script>
+{% endblock %}

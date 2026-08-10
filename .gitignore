@@ -1,0 +1,21 @@
+# Python / Virtual Environment
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Local Database & Secrets
+db.sqlite3
+db.sqlite3-journal
+.env
+
+# Collected Static & Media Files
+staticfiles/
+media/
+
+# IDE & System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

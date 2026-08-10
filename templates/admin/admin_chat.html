@@ -1,0 +1,342 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Admin Member Chat | Yuva Portal{% endblock %}
+
+{% block breadcrumb_current %}Member Chat Support{% endblock %}
+
+{% block header_title %}
+    <div class="flex items-center gap-3">
+        <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 shadow-lg shadow-indigo-500/30 ring-2 ring-white/20 dark:ring-slate-800/40 animate-pulse">
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+        </div>
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Member Chat Support</span>
+                <span class="inline-flex items-center gap-1.5 text-[11px] bg-gradient-to-r from-indigo-500/15 to-purple-500/15 text-indigo-600 dark:text-indigo-400 font-extrabold px-3 py-1 rounded-full border border-indigo-500/30 shadow-sm backdrop-blur-md">
+                    <svg class="w-3 h-3 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Secure Direct Line
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Send secure direct messages to members and review member conversation threads.</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<style>
+    @keyframes messageSlide {
+        from { opacity: 0; transform: translateY(12px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-message-slide {
+        animation: messageSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
+<div class="space-y-6 pb-12 animate-fade-in max-w-7xl mx-auto">
+
+    <!-- Top Chat Action Bar / Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-indigo-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-indigo-950/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> Active Threads
+                </span>
+                <h3 id="activeThreadsCount" class="text-2xl font-black text-slate-900 dark:text-white">0</h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            </div>
+        </div>
+        
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-emerald-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-emerald-950/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/10 flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online Members
+                </span>
+                <h3 id="onlineMembersCount" class="text-2xl font-black text-slate-900 dark:text-white">0</h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+        </div>
+
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-purple-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-purple-950/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/10 flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span> Encrypted Protocol
+                </span>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">TLS Secure</h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Workspace Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
+        
+        <!-- Member Directory Sidebar (Left 4 Columns) -->
+        <div class="lg:col-span-4 glass-panel rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Member Directory</h2>
+                    <span id="memberCountBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">0 loaded</span>
+                </div>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" id="memberSearchInput" placeholder="Search members by name or email..." class="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+            </div>
+
+            <!-- Member List Scrollable Area -->
+            <div id="memberListContainer" class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/50 p-2 space-y-1">
+                <div class="p-8 text-center text-slate-400 dark:text-slate-500 text-xs font-medium">Loading member directory...</div>
+            </div>
+        </div>
+
+        <!-- Conversation Panel (Right 8 Columns) -->
+        <div class="lg:col-span-8 glass-panel rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col overflow-hidden relative">
+            
+            <!-- Chat Header Bar -->
+            <div id="activeChatHeader" class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black text-slate-600 dark:text-slate-300 text-sm" id="activeChatAvatar">?</div>
+                    <div>
+                        <h3 id="activeChatName" class="text-sm font-bold text-slate-900 dark:text-white">Select a member</h3>
+                        <p id="activeChatStatus" class="text-[11px] text-slate-400 dark:text-slate-500">No active thread selected</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message History Container -->
+            <div id="messageHistoryContainer" class="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50/50 dark:bg-slate-950/30">
+                <div id="emptyChatPlaceholder" class="h-full flex flex-col items-center justify-center text-center p-6">
+                    <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3 shadow-inner">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">No active conversation selected</h4>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Pick a member directory item on the left to display messages and send secure guidance.</p>
+                </div>
+            </div>
+
+            <!-- Message Compose Form -->
+            <form id="admin-chat-form" class="p-4 border-t border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md hidden">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="chatMessageInput" placeholder="Type secure admin message..." class="flex-1 px-4 py-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                    <button type="submit" class="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all duration-200 flex items-center gap-2">
+                        <span>Send</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let allMembers = [];
+        let activeMemberId = null;
+
+        const memberListContainer = document.getElementById('memberListContainer');
+        const memberCountBadge = document.getElementById('memberCountBadge');
+        const memberSearchInput = document.getElementById('memberSearchInput');
+        const activeThreadsCount = document.getElementById('activeThreadsCount');
+        const onlineMembersCount = document.getElementById('onlineMembersCount');
+        
+        const activeChatAvatar = document.getElementById('activeChatAvatar');
+        const activeChatName = document.getElementById('activeChatName');
+        const activeChatStatus = document.getElementById('activeChatStatus');
+        const messageHistoryContainer = document.getElementById('messageHistoryContainer');
+        const emptyChatPlaceholder = document.getElementById('emptyChatPlaceholder');
+        const adminChatForm = document.getElementById('admin-chat-form');
+        const chatMessageInput = document.getElementById('chatMessageInput');
+
+        // Fetch members from API endpoint
+        function fetchMembers() {
+            fetch('/admin-panel/api/members/', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                allMembers = Array.isArray(data) ? data : (data.members || data.results || []);
+                renderMemberList(allMembers);
+                
+                if (memberCountBadge) memberCountBadge.textContent = `${allMembers.length} loaded`;
+                if (activeThreadsCount) activeThreadsCount.textContent = allMembers.length;
+                if (onlineMembersCount) onlineMembersCount.textContent = allMembers.filter(m => m.is_online).length;
+            })
+            .catch(err => {
+                console.error('Error fetching members:', err);
+                memberListContainer.innerHTML = `<div class="p-6 text-center text-rose-500 text-xs font-semibold">Failed to load member directory. Please ensure API is configured.</div>`;
+            });
+        }
+
+        function renderMemberList(members) {
+            if (!members || members.length === 0) {
+                memberListContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs font-medium">No members found.</div>`;
+                return;
+            }
+
+            memberListContainer.innerHTML = members.map(m => `
+                <div onclick="selectMember(${m.id}, '${escapeHtml(m.name || m.username || 'Member')}', '${escapeHtml(m.email || '')}')" 
+                     class="group p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-indigo-500/10 dark:hover:bg-indigo-500/20 border border-transparent hover:border-indigo-500/30 flex items-center gap-3">
+                    <div class="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-md">
+                        ${(m.name || m.username || 'M').charAt(0).toUpperCase()}
+                        ${m.is_online ? '<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>' : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">${escapeHtml(m.name || m.username || 'Member')}</h4>
+                            <span class="text-[10px] text-slate-400">${m.last_active || ''}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 truncate">${escapeHtml(m.email || 'No email provided')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.selectMember = function(id, name, email) {
+            activeMemberId = id;
+            if (activeChatAvatar) activeChatAvatar.textContent = name.charAt(0).toUpperCase();
+            if (activeChatName) activeChatName.textContent = name;
+            if (activeChatStatus) activeChatStatus.textContent = email || 'Active Member';
+            if (adminChatForm) adminChatForm.classList.remove('hidden');
+            
+            fetchChatMessages(id);
+        };
+
+        function fetchChatMessages(memberId) {
+            messageHistoryContainer.innerHTML = `<div class="h-full flex items-center justify-center text-xs text-slate-400">Loading conversation...</div>`;
+            
+            fetch(`/admin-panel/api/chat/${memberId}/`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const messages = Array.isArray(data) ? data : (data.messages || []);
+                renderMessages(messages);
+            })
+            .catch(err => {
+                console.error('Error fetching messages:', err);
+                messageHistoryContainer.innerHTML = `<div class="h-full flex items-center justify-center text-xs text-rose-500">Failed to load messages. Please ensure backend URL routes exist.</div>`;
+            });
+        }
+
+        function renderMessages(messages) {
+            if (!messages || messages.length === 0) {
+                messageHistoryContainer.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center p-6">
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">No messages yet with this member</h4>
+                        <p class="text-[11px] text-slate-400 mt-1">Send a message below to start the conversation thread.</p>
+                    </div>`;
+                return;
+            }
+
+            messageHistoryContainer.innerHTML = messages.map(msg => {
+                // Check if the sender is 'ADMIN' (from your backend) or falls back to 'is_admin'
+                const isAdmin = (msg.sender === 'ADMIN' || msg.sender === 'admin' || msg.is_admin);
+                
+                return `
+                <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-message-slide">
+                    <div class="max-w-[75%] rounded-2xl px-4 py-3 text-xs shadow-md ${
+                        isAdmin 
+                        ? 'bg-indigo-600 text-white rounded-br-none' 
+                        : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700/50 rounded-bl-none'
+                    }">
+                        <p class="leading-relaxed">${escapeHtml(msg.message || msg.content || '')}</p>
+                        <span class="block text-[9px] mt-1 opacity-75 ${isAdmin ? 'text-white/70' : 'text-slate-400'} text-right">
+                            ${msg.timestamp || msg.created_at || ''}
+                        </span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            // Scroll to bottom
+            messageHistoryContainer.scrollTop = messageHistoryContainer.scrollHeight;
+        }
+
+        if (adminChatForm) {
+            adminChatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const text = chatMessageInput.value.trim();
+                if (!text || !activeMemberId) return;
+
+                fetch(`/admin-panel/api/chat/send/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ member_id: activeMemberId, message: text })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' || data.success) {
+                        chatMessageInput.value = '';
+                        fetchChatMessages(activeMemberId);
+                    } else {
+                        alert(data.error || 'Failed to send message.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error sending message:', err);
+                });
+            });
+        }
+
+        if (memberSearchInput) {
+            memberSearchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                const filtered = allMembers.filter(m => 
+                    (m.name && m.name.toLowerCase().includes(query)) || 
+                    (m.username && m.username.toLowerCase().includes(query)) ||
+                    (m.email && m.email.toLowerCase().includes(query))
+                );
+                renderMemberList(filtered);
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        fetchMembers();
+    });
+</script>
+{% endblock %}

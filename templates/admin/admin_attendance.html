@@ -1,0 +1,509 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Attendance & Roll Call | Yuva Portal{% endblock %}
+
+{% block breadcrumb_current %}Attendance Records{% endblock %}
+
+{% block header_title %}
+    <div class="flex items-center gap-3">
+        <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 shadow-lg shadow-indigo-500/30 ring-2 ring-white/20 dark:ring-slate-800/40 animate-pulse">
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2m-6 9l2 2 4-4" />
+            </svg>
+        </div>
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Attendance & Fine Tracker</span>
+                <span id="meetingContextBadge" class="inline-flex items-center gap-1.5 text-[11px] bg-gradient-to-r from-indigo-500/15 to-purple-500/15 text-indigo-600 dark:text-indigo-400 font-extrabold px-3 py-1 rounded-full border border-indigo-500/30 shadow-sm backdrop-blur-md">
+                    Roll Call & Ledger
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Record roll calls, monitor attendance stats, and track fine payments (Paid vs. Pending).</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-12 animate-fade-in max-w-7xl mx-auto">
+
+    <!-- Top Grid: Analytics / Status Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-rose-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-rose-950/20 backdrop-blur-xl flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 mb-2">
+                    Total Fines Generated
+                </span>
+                <h3 id="absentTotalFines" class="text-2xl font-black text-slate-900 dark:text-white">₹0.00</h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+        
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-amber-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-amber-950/20 backdrop-blur-xl flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-2">
+                    Total Absences Logged
+                </span>
+                <h3 id="absentCount" class="text-2xl font-black text-slate-900 dark:text-white">0</h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+
+        <div class="group relative glass-panel p-5 rounded-3xl shadow-xl border border-white/40 dark:border-slate-800/80 bg-gradient-to-br from-white/80 via-white/50 to-indigo-500/5 dark:from-slate-900/80 dark:via-slate-900/50 dark:to-indigo-950/20 backdrop-blur-xl flex items-center justify-between">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-2">
+                    Meeting Central
+                </span>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">
+                    <a href="/admin-panel/meetings/" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-bold">Manage Schedules &rarr;</a>
+                </h3>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Take Attendance Form Section -->
+    <div class="glass-panel p-6 rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-white flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Take Live Roll Call
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Select a target meeting session, mark member attendance statuses, and save records.</p>
+            </div>
+            
+            <div class="w-full md:w-72">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Select Meeting Session</label>
+                <select id="attendanceMeetingSelect" class="w-full px-3 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    <option value="">-- Choose Meeting --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Toolbar: Search & Quick Actions -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-3 pt-4 pb-2">
+            <div class="w-full md:w-80">
+                <input type="text" id="rollCallSearch" placeholder="Search member by name..." class="w-full px-3 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Quick Actions:</span>
+                <button type="button" onclick="setAllStatus('present')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all border border-emerald-500/20">Mark All Present</button>
+                <button type="button" onclick="setAllStatus('absent')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs transition-all border border-rose-500/20">Mark All Absent</button>
+            </div>
+        </div>
+
+        <form id="takeAttendanceForm" class="mt-2 space-y-4">
+            <div class="overflow-x-auto max-h-96 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/80 text-[11px] font-extrabold uppercase text-slate-400 tracking-wider sticky top-0 border-b border-slate-200 dark:border-slate-800">
+                            <th class="p-3.5">Member Name</th>
+                            <th class="p-3.5">Attendance Status</th>
+                            <th class="p-3.5">Fine Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberRollCallList" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <td colspan="3" class="p-6 text-center text-slate-400">Please select a meeting session above to load members.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" id="submitAttendanceBtn" disabled class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Save Roll Call Records</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Fine Payment Status Tracker Section -->
+    <div class="glass-panel rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col overflow-hidden mt-6">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Fine Payment Status Tracker</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Track pending and paid fines. Click the status button to toggle fine settlement.</p>
+            </div>
+            <span id="finedCountBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">0 records</span>
+        </div>
+
+        <div class="flex-1 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
+                        <th class="p-4">Member Name</th>
+                        <th class="p-4">Meeting Session</th>
+                        <th class="p-4">Fine Owed</th>
+                        <th class="p-4">Payment Status</th>
+                        <th class="p-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="finedTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs text-slate-700 dark:text-slate-300">
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-400">Loading fine ledger...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Attendance Log History Table Section -->
+    <div class="glass-panel rounded-3xl border border-white/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl flex flex-col overflow-hidden mt-6">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Attendance Log History</h3>
+            <span id="attendanceCountBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">0 loaded</span>
+        </div>
+
+        <div class="flex-1 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
+                        <th class="p-4">Member</th>
+                        <th class="p-4">Meeting Reference</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4">Fine Amount</th>
+                        <th class="p-4 text-right">Logged Date</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs text-slate-700 dark:text-slate-300">
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-400">Loading attendance history data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function setAllStatus(statusVal) {
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.value = statusVal;
+            select.dispatchEvent(new Event('change'));
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const attendanceMeetingSelect = document.getElementById('attendanceMeetingSelect');
+        const memberRollCallList = document.getElementById('memberRollCallList');
+        const submitAttendanceBtn = document.getElementById('submitAttendanceBtn');
+        const takeAttendanceForm = document.getElementById('takeAttendanceForm');
+        const rollCallSearch = document.getElementById('rollCallSearch');
+        
+        const attendanceTableBody = document.getElementById('attendanceTableBody');
+        const finedTableBody = document.getElementById('finedTableBody');
+        const absentTotalFines = document.getElementById('absentTotalFines');
+        const absentCount = document.getElementById('absentCount');
+        const attendanceCountBadge = document.getElementById('attendanceCountBadge');
+        const finedCountBadge = document.getElementById('finedCountBadge');
+        const meetingContextBadge = document.getElementById('meetingContextBadge');
+
+        let allMembers = [];
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlMeetingId = urlParams.get('meeting_id');
+
+        function initPageData() {
+            fetch('/admin-panel/api/admin/meetings/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.json())
+                .then(data => {
+                    const meetings = Array.isArray(data) ? data : (data.meetings || []);
+                    attendanceMeetingSelect.innerHTML = '<option value="">-- Choose Meeting --</option>' + 
+                        meetings.map(m => `<option value="${m.id}">${escapeHtml(m.title)} (${m.date ? new Date(m.date).toLocaleDateString() : 'N/A'})</option>`).join('');
+                    
+                    if (urlMeetingId) {
+                        attendanceMeetingSelect.value = urlMeetingId;
+                        loadRollCallMembers(urlMeetingId);
+                    }
+                }).catch(err => console.error('Error fetching meetings list:', err));
+
+            fetch('/admin-panel/api/members/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.json())
+                .then(data => {
+                    allMembers = Array.isArray(data) ? data : (data.members || data.results || []);
+                }).catch(err => console.error('Error fetching members:', err));
+
+            fetchAttendanceHistory();
+        }
+
+        if (rollCallSearch) {
+            rollCallSearch.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                const rows = memberRollCallList.querySelectorAll('tr[data-member-id]');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        }
+
+        memberRollCallList.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('status-select')) {
+                const row = e.target.closest('tr');
+                const fineInput = row.querySelector('.fine-input');
+                if (e.target.value === 'absent') {
+                    fineInput.value = '100.00';
+                } else if (e.target.value === 'late') {
+                    fineInput.value = '50.00';
+                } else {
+                    fineInput.value = '0.00';
+                }
+            }
+        });
+
+        attendanceMeetingSelect.addEventListener('change', function() {
+            const selectedMeetingId = this.value;
+            if (selectedMeetingId) {
+                loadRollCallMembers(selectedMeetingId);
+            } else {
+                memberRollCallList.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400">Please select a meeting session above to load members.</td></tr>`;
+                submitAttendanceBtn.disabled = true;
+            }
+        });
+
+        function loadRollCallMembers(meetingId) {
+            if (!allMembers || allMembers.length === 0) {
+                memberRollCallList.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400">Loading members list...</td></tr>`;
+                setTimeout(() => loadRollCallMembers(meetingId), 500);
+                return;
+            }
+
+            memberRollCallList.innerHTML = allMembers.map((m, index) => {
+                const memberId = m.id;
+                const memberName = m.user?.username || m.name || `Member #${memberId}`;
+                return `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors" data-member-id="${memberId}">
+                    <td class="p-3.5 font-bold text-slate-900 dark:text-white">
+                        ${escapeHtml(memberName)}
+                    </td>
+                    <td class="p-3.5">
+                        <select name="status" class="status-select px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none">
+                            <option value="present" selected>Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="late">Late</option>
+                            <option value="excused">Excused</option>
+                            <option value="on_leave">On Leave</option>
+                        </select>
+                    </td>
+                    <td class="p-3.5">
+                        <input type="number" step="0.01" name="fine_amount" value="0.00" class="fine-input w-32 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 focus:outline-none">
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            submitAttendanceBtn.disabled = false;
+        }
+
+        takeAttendanceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const meetingId = attendanceMeetingSelect.value;
+            if (!meetingId) {
+                alert('Please select a meeting session first.');
+                return;
+            }
+
+            const rows = memberRollCallList.querySelectorAll('tr[data-member-id]');
+            const attendancePayload = [];
+
+            rows.forEach(row => {
+                const memberId = row.getAttribute('data-member-id');
+                const status = row.querySelector('.status-select').value;
+                const fineAmount = row.querySelector('.fine-input').value || 0;
+
+                attendancePayload.push({
+                    member: parseInt(memberId),
+                    meeting: parseInt(meetingId),
+                    status: status,
+                    fine_amount: parseFloat(fineAmount)
+                });
+            });
+
+            fetch('/admin-panel/api/admin/attendance/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ attendance: attendancePayload })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Attendance successfully recorded!');
+                    fetchAttendanceHistory();
+                } else {
+                    console.error('Server validation error:', data);
+                    alert('Failed to save: ' + JSON.stringify(data.errors || data.error || data));
+                }
+            })
+            .catch(err => {
+                console.error('Network error saving attendance:', err);
+                alert('An error occurred while saving attendance.');
+            });
+        });
+
+        function fetchAttendanceHistory() {
+            let endpoint = '/admin-panel/api/admin/attendance/';
+            if (urlMeetingId) {
+                endpoint += `?meeting_id=${urlMeetingId}`;
+            }
+
+            fetch(endpoint, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                const records = Array.isArray(data) ? data : (data.records || []);
+                const finedRecords = data.fined_records || [];
+                
+                if (absentTotalFines) absentTotalFines.textContent = `₹${(data.absent_total_fines || 0).toFixed(2)}`;
+                if (absentCount) absentCount.textContent = data.absent_count || 0;
+                if (attendanceCountBadge) attendanceCountBadge.textContent = `${records.length} loaded`;
+                if (finedCountBadge) finedCountBadge.textContent = `${finedRecords.length} records`;
+
+                renderAttendanceHistory(records);
+                renderFinedLedger(finedRecords);
+            })
+            .catch(err => {
+                console.error('Error loading attendance history:', err);
+                attendanceTableBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500">Failed to load attendance records.</td></tr>`;
+            });
+        }
+
+        window.togglePaymentStatus = function(recordId) {
+            fetch('/admin-panel/api/admin/attendance/', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ record_id: recordId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (res.ok) {
+                    fetchAttendanceHistory();
+                } else {
+                    alert('Failed to update payment status: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error('Network error toggling payment status:', err);
+            });
+        }
+
+        function renderFinedLedger(records) {
+            if (!records || records.length === 0) {
+                finedTableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No active member fines recorded.</td></tr>`;
+                return;
+            }
+
+            finedTableBody.innerHTML = records.map(r => {
+                const isPaid = r.is_paid;
+                const statusBadge = isPaid 
+                    ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Paid</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">Pending</span>`;
+                
+                const actionButtonText = isPaid ? 'Mark Pending' : 'Mark as Paid';
+                const actionButtonColor = isPaid 
+                    ? 'bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/20' 
+                    : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+
+                return `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-4 font-bold text-slate-900 dark:text-white">
+                        ${escapeHtml(r.member_name || r.member?.user?.username || 'Member #' + (r.member || ''))}
+                    </td>
+                    <td class="p-4 text-slate-600 dark:text-slate-400">
+                        ${escapeHtml(r.meeting_title || 'Meeting #' + (r.meeting || 'N/A'))}
+                    </td>
+                    <td class="p-4 font-black text-rose-600 dark:text-rose-400">
+                        ₹${parseFloat(r.fine_amount || 0).toFixed(2)}
+                    </td>
+                    <td class="p-4">
+                        ${statusBadge}
+                    </td>
+                    <td class="p-4 text-right">
+                        <button type="button" onclick="togglePaymentStatus(${r.id})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${actionButtonColor}">
+                            ${actionButtonText}
+                        </button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function renderAttendanceHistory(records) {
+            if (!records || records.length === 0) {
+                attendanceTableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No attendance history records found.</td></tr>`;
+                return;
+            }
+
+            attendanceTableBody.innerHTML = records.map(r => {
+                let statusBadgeColor = 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
+                const status = (r.status || '').toLowerCase();
+                
+                if (status === 'present') statusBadgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+                else if (status === 'absent') statusBadgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+                else if (status === 'late') statusBadgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+
+                return `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-4 font-bold text-slate-900 dark:text-white">
+                        ${escapeHtml(r.member_name || r.member?.user?.username || 'Member #' + (r.member || ''))}
+                    </td>
+                    <td class="p-4 text-slate-600 dark:text-slate-400">
+                        ${escapeHtml(r.meeting_title || 'Meeting #' + (r.meeting || 'N/A'))}
+                    </td>
+                    <td class="p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${statusBadgeColor}">
+                            ${escapeHtml(r.status || 'Unknown')}
+                        </span>
+                    </td>
+                    <td class="p-4 font-bold text-slate-900 dark:text-white">
+                        ₹${parseFloat(r.fine_amount || 0).toFixed(2)}
+                    </td>
+                    <td class="p-4 text-right font-medium text-slate-500">
+                        ${r.date || 'N/A'}
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        initPageData();
+    });
+</script>
+{% endblock %}

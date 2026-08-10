@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}Yuva Admin Control Center{% endblock %}</title>
     <!-- Tailwind CSS with Typography & Forms -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -85,19 +86,52 @@
             -webkit-backdrop-filter: blur(28px);
         }
 
-        /* Tooltip animation utility */
-        .tooltip {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            transform: translateY(4px);
-        }
-        .group:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
-            transform: translateY(0);
+        .toast-animate { animation: fadeInUp 0.25s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
+    <script>
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('global-toast-container');
+            if (!container) return;
+            const colors = {
+                info: 'bg-slate-900 text-white border-slate-200/70',
+                success: 'bg-emerald-600 text-white border-emerald-500/30',
+                error: 'bg-rose-600 text-white border-rose-500/30'
+            };
+            const toast = document.createElement('div');
+            toast.className = `toast-animate max-w-sm w-full rounded-3xl shadow-2xl p-4 border ${colors[type] || colors.info} flex items-start gap-3`;
+            toast.innerHTML = `
+                <div class="flex-1 text-sm leading-6">${message}</div>
+                <button type="button" class="ml-auto text-white/80 hover:text-white" onclick="this.closest('div').remove()">&times;</button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), duration);
+        }
+        function showSuccess(message, duration = 4000) { showToast(message, 'success', duration); }
+        function showError(message, duration = 5000) { showToast(message, 'error', duration); }
+        function showInfo(message, duration = 4000) { showToast(message, 'info', duration); }
+        
+        function openConfirm(message, title = 'Confirm action') {
+            return new Promise((resolve) => {
+                window.confirmDialogResolve = (value) => {
+                    closeConfirmDialog();
+                    resolve(value);
+                };
+                document.getElementById('confirm-dialog-title').textContent = title;
+                document.getElementById('confirm-dialog-message').textContent = message;
+                document.getElementById('global-confirm-dialog').classList.remove('hidden');
+            });
+        }
+        function closeConfirmDialog() {
+            const dialog = document.getElementById('global-confirm-dialog');
+            if (!dialog) return;
+            dialog.classList.add('hidden');
+            if (window.confirmDialogResolve) { window.confirmDialogResolve = null; }
+        }
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-slate-100 text-slate-900 dark:bg-darker dark:text-slate-100 flex overflow-hidden transition-colors duration-500 selection:bg-indigo-500 selection:text-white">
@@ -133,32 +167,134 @@
                 </button>
             </div>
 
-            <!-- Navigation Links Scrollable Area -->
-            <nav class="space-y-2 flex-1 overflow-y-auto pr-1">
+            <!-- Navigation Links Scrollable Area with Fixed Logical Icons -->
+            <nav class="space-y-1.5 flex-1 overflow-y-auto pr-1">
                 <div class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-4 mb-2">Core Modules</div>
                 
-                <a href="{% url 'admin_dashboard' %}" class="group relative flex items-center gap-3.5 px-4 py-3.5 rounded-2xl {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                <!-- Dashboard -->
+                <a href="{% url 'admin_dashboard' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
                     {% if request.resolver_match.url_name == 'admin_dashboard' %}
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
                     {% endif %}
-                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                    <span>Dashboard</span>
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+                        <span>Dashboard</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_dashboard' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
                 </a>
 
-                <a href="{% url 'admin_members' %}" class="group relative flex items-center gap-3.5 px-4 py-3.5 rounded-2xl {% if request.resolver_match.url_name == 'admin_members' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                <!-- Members Directory -->
+                <a href="{% url 'admin_members' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_members' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
                     {% if request.resolver_match.url_name == 'admin_members' %}
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
                     {% endif %}
-                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span>Members Directory</span>
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>Members Directory</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_members' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
                 </a>
 
-                <a href="{% url 'admin_loans' %}" class="group relative flex items-center gap-3.5 px-4 py-3.5 rounded-2xl {% if request.resolver_match.url_name == 'admin_loans' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                <!-- Loan Portfolios -->
+                <a href="{% url 'admin_loans' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_loans' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
                     {% if request.resolver_match.url_name == 'admin_loans' %}
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
                     {% endif %}
-                    <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                    <span>Loan Portfolios</span>
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <span>Loan Portfolios</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_loans' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Collections -->
+                <a href="{% url 'admin_collections' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_collections' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_collections' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>Collections</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_collections' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Attendance (Fixed: Clipboard Check Icon) -->
+                <a href="{% url 'admin_attendance' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_attendance' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_attendance' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        <span>Attendance</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_attendance' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Meetings (Fixed: Calendar Icon) -->
+                <a href="{% url 'admin_meetings' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_meetings' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_meetings' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>Meetings</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_meetings' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Finance (Fixed: Currency/Ledger Icon) -->
+                <a href="{% url 'admin_finance' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_finance' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_finance' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Finance</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_finance' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Group Reports -->
+                <a href="{% url 'admin_reports' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_reports' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_reports' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Group Reports</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_reports' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
+                </a>
+
+                <!-- Chat -->
+                <a href="{% url 'admin_chat' %}" class="group relative flex items-center justify-between px-4 py-3 rounded-2xl {% if request.resolver_match.url_name == 'admin_chat' %}bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 font-medium{% endif %} transition-all duration-300">
+                    {% if request.resolver_match.url_name == 'admin_chat' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-gradient-to-b from-indigo-500 to-violet-600 rounded-r-full shadow-sm shadow-indigo-500"></span>
+                    {% endif %}
+                    <div class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span>Chat</span>
+                    </div>
+                    {% if request.resolver_match.url_name == 'admin_chat' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    {% endif %}
                 </a>
             </nav>
 
@@ -203,14 +339,14 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Quick Search Input / Trigger Shortcut -->
-                <div class="hidden lg:flex items-center relative">
+                <!-- Quick Search Input / Command Palette Trigger -->
+                <button onclick="toggleCommandPalette()" class="hidden lg:flex items-center relative text-left w-48 xl:w-64 pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-400 hover:border-indigo-500/50 transition-all cursor-pointer">
                     <span class="absolute left-3.5 text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </span>
-                    <input type="text" placeholder="Quick search..." class="w-48 xl:w-64 pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                    <span class="truncate">Search modules...</span>
                     <span class="absolute right-3 text-[10px] text-slate-400 border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-900/50 font-mono">⌘K</span>
-                </div>
+                </button>
 
                 <!-- Theme Switcher Button -->
                 <button onclick="toggleTheme()" aria-label="Toggle Dark Mode" class="p-2.5 rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/85 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 shadow-sm group relative">
@@ -235,6 +371,66 @@
         </main>
     </div>
 
+    <!-- Interactive Command Palette Modal (⌘K) -->
+    <div id="command-palette" class="fixed inset-0 z-[1200] hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 transition-all">
+        <div class="w-full max-w-xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <svg class="w-5 h-5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="command-input" placeholder="Type a command or search modules..." class="w-full bg-transparent text-sm text-slate-900 dark:text-white focus:outline-none placeholder-slate-400 font-medium" oninput="filterCommands(this.value)">
+                <button type="button" onclick="toggleCommandPalette()" class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white">ESC</button>
+            </div>
+            <div id="command-list" class="p-2 overflow-y-auto space-y-1">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1.5">Navigation</div>
+                <a href="{% url 'admin_dashboard' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"/></svg> Go to Dashboard</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_members' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857"/></svg> Members Directory</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_loans' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1"/></svg> Loan Portfolios</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_collections' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5"/></svg> Collections</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_attendance' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12"/></svg> Attendance</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_meetings' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3"/></svg> Meetings</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_finance' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2"/></svg> Finance & Ledgers</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_reports' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4"/></svg> Group Reports</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+                <a href="{% url 'admin_chat' %}" class="flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01"/></svg> Live Chat Support</span>
+                    <span class="text-xs text-slate-400">Module</span>
+                </a>
+
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1.5 mt-2">Quick Actions</div>
+                <button onclick="toggleTheme(); toggleCommandPalette();" class="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-600/10 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm font-medium text-slate-700 dark:text-slate-300 transition group text-left">
+                    <span class="flex items-center gap-3"><svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1"/></svg> Toggle Dark/Light Mode</span>
+                    <span class="text-xs text-slate-400">Action</span>
+                </button>
+            </div>
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>Use <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono">↑</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono">↓</kbd> to navigate</span>
+                <span>Press <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono">ESC</kbd> to close</span>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sidebar Toggle logic with Smooth Backdrop Animation
         function toggleSidebar() {
@@ -252,6 +448,51 @@
                 sidebar.classList.remove('-translate-x-full');
             }
         }
+
+        // Command Palette Toggle and Filtering
+        function toggleCommandPalette() {
+            const palette = document.getElementById('command-palette');
+            const input = document.getElementById('command-input');
+            const isHidden = palette.classList.contains('hidden');
+            if (isHidden) {
+                palette.classList.remove('hidden');
+                palette.classList.add('flex');
+                setTimeout(() => input.focus(), 50);
+            } else {
+                palette.classList.add('hidden');
+                palette.classList.remove('flex');
+                input.value = '';
+                filterCommands('');
+            }
+        }
+
+        function filterCommands(query) {
+            const list = document.getElementById('command-list');
+            const items = list.querySelectorAll('a, button');
+            const q = query.toLowerCase();
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(q)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Global Keyboard Shortcuts (Ctrl+K or Cmd+K)
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                toggleCommandPalette();
+            }
+            if (e.key === 'Escape') {
+                const palette = document.getElementById('command-palette');
+                if (!palette.classList.contains('hidden')) {
+                    toggleCommandPalette();
+                }
+            }
+        });
 
         // Theme Toggle logic with LocalStorage persistence
         function toggleTheme() {
@@ -276,5 +517,22 @@
         })();
     </script>
     {% block extra_js %}{% endblock %}
+
+    <div id="global-toast-container" class="fixed top-4 right-4 z-[1000] flex flex-col gap-3"></div>
+    <div id="global-confirm-dialog" class="fixed inset-0 z-[1100] hidden items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 id="confirm-dialog-title" class="text-lg font-bold text-slate-900 dark:text-white">Confirm action</h3>
+                    <p id="confirm-dialog-message" class="mt-2 text-sm text-slate-600 dark:text-slate-400"></p>
+                </div>
+                <button type="button" onclick="closeConfirmDialog()" class="text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full p-2 transition-colors">&times;</button>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="window.confirmDialogResolve(false)" class="px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">Cancel</button>
+                <button type="button" onclick="window.confirmDialogResolve(true)" class="px-4 py-2 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-500 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

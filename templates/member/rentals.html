@@ -1,0 +1,167 @@
+{% extends 'member/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <p class="text-xs uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400 font-extrabold">Community Resources</p>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white mt-1">Rental Items Directory</h1>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Browse community-owned tools, machinery, and equipment available for member booking.</p>
+        </div>
+    </div>
+
+    <!-- Catalog Grid -->
+    <div id="rental-catalog" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div class="col-span-full text-center py-12 text-slate-400">
+            <div class="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p class="text-xs font-semibold">Loading available items...</p>
+        </div>
+    </div>
+
+    <!-- My Rental Requests Section -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4">My Rental History & Status</h2>
+        <div id="my-requests-list" class="space-y-3">
+            <p class="text-xs text-slate-400">Loading your requests...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Request Modal -->
+<div id="rental-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl">
+        <h3 id="modal-item-title" class="text-lg font-bold text-slate-900 dark:text-white mb-4">Request Item</h3>
+        <form id="rental-form" class="space-y-4">
+            <input type="hidden" id="modal-item-id">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Start Date</label>
+                <input type="date" id="start-date" required class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">End Date</label>
+                <input type="date" id="end-date" required class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" onclick="closeModal()" class="w-1/2 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 font-bold text-sm text-slate-600 dark:text-slate-300">Cancel</button>
+                <button type="submit" class="w-1/2 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm text-white shadow-lg shadow-emerald-600/20">Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const catalogContainer = document.getElementById('rental-catalog');
+const requestsContainer = document.getElementById('my-requests-list');
+const rentalModal = document.getElementById('rental-modal');
+const rentalForm = document.getElementById('rental-form');
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+let currentCatalog = [];
+
+const loadRentals = async () => {
+    try {
+        const response = await fetch('/api/rentals/', { credentials: 'include' });
+        const data = await response.json();
+        
+        currentCatalog = data.catalog;
+        
+        // Render Catalog
+        catalogContainer.innerHTML = '';
+        if (data.catalog.length === 0) {
+            catalogContainer.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400">No rental items currently available.</div>';
+        } else {
+            data.catalog.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-lg text-slate-900 dark:text-white">${item.name}</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-extrabold ${item.available_quantity > 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 text-rose-500'}">
+                                ${item.available_quantity > 0 ? `${item.available_quantity} Available` : 'Out of Stock'}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-4">${item.description || 'No description provided.'}</p>
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-4 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl">
+                            <span>Rental Fee: <strong class="text-slate-900 dark:text-white">₹${item.rental_fee}</strong></span>
+                            <span>Deposit: <strong class="text-slate-900 dark:text-white">₹${item.deposit_fee}</strong></span>
+                        </div>
+                    </div>
+                    <button onclick="openModal(${item.id})" ${item.available_quantity === 0 ? 'disabled' : ''} class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/20">
+                        Request Item
+                    </button>
+                `;
+                catalogContainer.appendChild(card);
+            });
+        }
+
+        // Render My Requests
+        requestsContainer.innerHTML = '';
+        if (data.my_requests.length === 0) {
+            requestsContainer.innerHTML = '<p class="text-xs text-slate-400">You have not made any rental requests yet.</p>';
+        } else {
+            data.my_requests.forEach(req => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800';
+                row.innerHTML = `
+                    <div>
+                        <p class="font-bold text-sm text-slate-900 dark:text-white">${req.item_name}</p>
+                        <p class="text-xs text-slate-400">From ${req.start_date} to ${req.end_date}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                        req.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                        req.status === 'rejected' ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-600'
+                    }">${req.status}</span>
+                `;
+                requestsContainer.appendChild(row);
+            });
+        }
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+function openModal(itemId) {
+    const item = currentCatalog.find(i => i.id === itemId);
+    if (!item) return;
+    document.getElementById('modal-item-title').innerText = `Request: ${item.name}`;
+    document.getElementById('modal-item-id').value = item.id;
+    rentalModal.classList.remove('hidden');
+    rentalModal.classList.add('flex');
+}
+
+function closeModal() {
+    rentalModal.classList.add('hidden');
+    rentalModal.classList.remove('flex');
+}
+
+rentalForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const itemId = document.getElementById('modal-item-id').value;
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+
+    try {
+        const res = await fetch('/api/rentals/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ item_id: itemId, start_date: startDate, end_date: endDate })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to submit request');
+        
+        closeModal();
+        loadRentals();
+        alert('Rental request sent successfully!');
+    } catch (err) {
+        alert(err.message);
+    }
+});
+
+loadRentals();
+</script>
+{% endblock %}

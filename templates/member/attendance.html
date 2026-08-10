@@ -1,0 +1,99 @@
+{% extends 'member/base.html' %}
+
+{% block title %}Attendance | Yuva Portal{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-6xl mx-auto py-6">
+    <div class="glass-panel rounded-3xl p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">My Attendance</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400">View attendance summaries for meetings and absences.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Present</p>
+                <h2 id="memberPresentCount" class="mt-3 text-3xl font-black text-slate-900 dark:text-white">0</h2>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Absent</p>
+                <h2 id="memberAbsentCount" class="mt-3 text-3xl font-black text-slate-900 dark:text-white">0</h2>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Pending Fines</p>
+                <h2 id="memberTotalFines" class="mt-3 text-3xl font-black text-slate-900 dark:text-white">₹0.00</h2>
+            </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white/95 shadow-sm dark:border-slate-700 dark:bg-slate-900 overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-800 dark:divide-slate-700 dark:text-slate-200">
+                <thead class="bg-slate-100 dark:bg-slate-800">
+                    <tr>
+                        <th class="px-4 py-3 uppercase tracking-wider text-slate-500">Date</th>
+                        <th class="px-4 py-3 uppercase tracking-wider text-slate-500">Meeting</th>
+                        <th class="px-4 py-3 uppercase tracking-wider text-slate-500">Status</th>
+                        <th class="px-4 py-3 uppercase tracking-wider text-slate-500">Fine</th>
+                    </tr>
+                </thead>
+                <tbody id="memberAttendanceBody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-slate-400">Loading attendance records...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadMemberAttendance();
+    });
+
+    async function loadMemberAttendance() {
+        try {
+            const response = await fetch('/api/member/attendance/', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('Failed to load attendance');
+            const data = await response.json();
+
+            document.getElementById('memberPresentCount').innerText = data.present_count;
+            document.getElementById('memberAbsentCount').innerText = data.absent_count;
+            document.getElementById('memberTotalFines').innerText = `₹${Number(data.total_fines).toFixed(2)}`;
+
+            const tbody = document.getElementById('memberAttendanceBody');
+            tbody.innerHTML = '';
+
+            if (!data.records.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">No attendance records found.</td></tr>';
+                return;
+            }
+
+            data.records.forEach(record => {
+                const badgeClass = record.status === 'present'
+                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-600 border-rose-500/20';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-4">${record.date || '—'}</td>
+                    <td class="px-4 py-4">${record.meeting_title || '-'}</td>
+                    <td class="px-4 py-4"><span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${badgeClass}">${record.status}</span></td>
+                    <td class="px-4 py-4">₹${Number(record.fine_amount || 0).toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error(error);
+            document.getElementById('memberAttendanceBody').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-rose-500">Unable to load attendance.</td></tr>';
+        }
+    }
+</script>
+{% endblock %}

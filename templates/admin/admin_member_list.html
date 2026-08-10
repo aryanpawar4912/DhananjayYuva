@@ -392,17 +392,20 @@
             if (response.ok) {
                 closeMemberModal();
                 fetchMembers();
+                showSuccess('Member profile saved successfully.');
             } else {
                 const errData = await response.json();
-                alert('Failed to save member profile: ' + JSON.stringify(errData));
+                showError('Failed to save member profile: ' + JSON.stringify(errData));
             }
         } catch (err) {
             console.error('Error saving member profile:', err);
+            showError('Failed to save member profile. Please try again.');
         }
     }
 
     async function deleteMember(id) {
-        if (!confirm('Are you sure you want to delete this member?')) return;
+        const confirmed = await openConfirm('Are you sure you want to delete this member?', 'Delete member');
+        if (!confirmed) return;
 
         try {
             const csrftoken = getCookie('csrftoken');
@@ -416,11 +419,13 @@
 
             if (response.ok) {
                 fetchMembers();
+                showSuccess('Member deleted successfully.');
             } else {
-                alert('Failed to delete member.');
+                showError('Failed to delete member.');
             }
         } catch (err) {
             console.error('Error deleting member:', err);
+            showError('Failed to delete member. Please try again.');
         }
     }
 

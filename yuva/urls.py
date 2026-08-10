@@ -12,7 +12,10 @@ urlpatterns = [
     path('passbook/', views.member_passbook_view, name='passbook'),
     path('profile/', views.member_profile, name='profile'),
     path('request-loan/', views.request_loan, name='request_loan'),
-    
+    path('chat/', views.member_chat_view, name='chat'),
+    path('attendance/', views.member_attendance_view, name='attendance'),
+    path('rentals/', views.member_rentals_view, name='rentals'),  # Added rental template view
+
     # ==========================================
     # 2. AUTHENTICATION URLs
     # ==========================================
@@ -29,13 +32,18 @@ urlpatterns = [
     path('api/passbook/', views.PassbookAPI.as_view(), name='api_passbook'),
     path('api/profile/', views.ProfileAPI.as_view(), name='api_profile'),
     
-    # Notifications & Documents
+    # Notifications, Documents & Chat
     path('api/notifications/', views.NotificationsAPI.as_view(), name='api_notifications'),
+    path('api/chat/', views.ChatAPI.as_view(), name='api_chat'),
     path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('api/upload-doc/', views.DocumentUploadAPI.as_view(), name='api_upload_doc'),
     
-    # Repayments
+    # Repayments & Attendance
     path('api/repayments/', views.RepaymentsAPI.as_view(), name='api_repayments'),
+    path('api/member/attendance/', views.MemberAttendanceAPI.as_view(), name='api_member_attendance'),
+
+    # Rentals Directory & Booking API
+    path('api/rentals/', views.MemberRentalDirectoryAPI.as_view(), name='api_rentals'),  # Added rental API view
 
     # ==========================================
     # 4. ADMIN & RAZORPAY URLs

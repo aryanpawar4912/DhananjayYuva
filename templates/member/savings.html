@@ -407,7 +407,7 @@ async function paySavingsDeposit() {
     const amount = amountInput.value;
     
     if (!amount || amount <= 0) {
-        alert('Please enter a valid deposit amount.');
+        showError('Please enter a valid deposit amount.');
         return;
     }
 
@@ -428,7 +428,7 @@ async function paySavingsDeposit() {
 
         if (!response.ok) {
             setPayButtonLoading(false);
-            alert(orderData.error || 'Failed to initiate payment.');
+            showError(orderData.error || 'Failed to initiate payment.');
             return;
         }
 
@@ -457,16 +457,16 @@ async function paySavingsDeposit() {
                     });
 
                     if (verifyRes.ok) {
-                        alert('Savings deposit successful!');
+                        showSuccess('Savings deposit successful!');
                         amountInput.value = '';
                         closeDepositModal();
                         fetchSavingsData();
                     } else {
-                        alert('Payment verification failed.');
+                        showError('Payment verification failed.');
                     }
                 } catch (verifyErr) {
                     console.error('Verification Error:', verifyErr);
-                    alert('An error occurred while verifying the payment.');
+                    showError('An error occurred while verifying the payment.');
                 } finally {
                     setPayButtonLoading(false);
                 }
@@ -484,7 +484,7 @@ async function paySavingsDeposit() {
         // Handle failure state
         rzp.on('payment.failed', function (response) {
             setPayButtonLoading(false);
-            alert(`Payment failed: ${response.error.description}`);
+            showError(`Payment failed: ${response.error.description}`);
         });
 
         rzp.open();
@@ -492,7 +492,7 @@ async function paySavingsDeposit() {
     } catch (err) {
         console.error('Order Creation Error:', err);
         setPayButtonLoading(false);
-        alert('Something went wrong during payment initialization.');
+        showError('Something went wrong during payment initialization.');
     }
 }
 </script>

@@ -4,9 +4,9 @@ from decimal import Decimal
 import razorpay
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -17,7 +17,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 
-from .models import Member, Notification, Repayment, SavingsTransaction, Loan, Document, LoanInstallment
+from .models import (
+    Member, Notification, Repayment, SavingsTransaction, Loan, 
+    Document, LoanInstallment, AdminNotice, ChatRoom, ChatMessage, 
+    AttendanceRecord, RentalItem, RentalRequest
+)
 from .forms import LoginForm, MemberRegistrationForm
 
 
@@ -65,7 +69,12 @@ def signup_view(request):
 # ==========================================
 @login_required
 def member_dashboard(request): 
-    return render(request, 'member/dashboard.html')
+    member = Member.objects.filter(user=request.user).first()
+    return render(request, 'member/dashboard.html', {'member': member})
+
+@login_required
+def member_chat_view(request): 
+    return render(request, 'member/chat.html')
 
 @login_required
 def member_savings_view(request): 
@@ -87,6 +96,16 @@ def request_loan(request):
 @login_required(login_url='login')
 def member_passbook_view(request):
     return render(request, 'member/passbook.html')
+
+
+@login_required
+def member_attendance_view(request):
+    return render(request, 'member/attendance.html')
+
+
+@login_required
+def member_rentals_view(request):
+    return render(request, 'member/rentals.html')
 
 
 # ==========================================
@@ -294,6 +313,64 @@ class ProfileAPI(APIView):
         return Response({'message': 'Profile updated successfully!'})
 
 
+class MemberAttendanceAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        member = Member.objects.filter(user=request.user).first()
+        if not member:
+            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        records = AttendanceRecord.objects.filter(member=member).order_by('-date')
+        response_data = {
+            'present_count': records.filter(status=AttendanceRecord.Status.PRESENT).count(),
+            'absent_count': records.filter(status=AttendanceRecord.Status.ABSENT).count(),
+            'total_fines': float(records.filter(status=AttendanceRecord.Status.ABSENT).aggregate(total=Sum('fine_amount'))['total'] or 0),
+            'records': [
+                {
+                    'date': rec.date.isoformat(),
+                    'status': rec.status,
+                    'fine_amount': float(rec.fine_amount),
+                    'meeting_title': rec.meeting.title if rec.meeting else None
+                }
+                for rec in records
+            ]
+        }
+        return Response(response_data)
+
+
+class MemberRentalDirectoryAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        items = RentalItem.objects.filter(is_active=True)
+        items_data = [{
+            'id': item.id,
+            'name': item.name,
+            'description': item.description,
+            'rental_fee': str(item.rental_fee),
+            'deposit_fee': str(item.deposit_fee),
+            'price': str(item.rental_fee),  # Added 'price' mapping for the frontend JS
+            'available_quantity': item.available_quantity,
+            'image_url': item.image.url if item.image else None
+        } for item in items]
+        
+        user_requests = RentalRequest.objects.filter(member__user=request.user).order_by('-created_at')
+        requests_data = [{
+            'id': req.id,
+            'item_name': req.item.name,
+            'start_date': req.start_date.strftime('%Y-%m-%d'),
+            'end_date': req.end_date.strftime('%Y-%m-%d'),
+            'status': req.status,
+            'created_at': req.created_at.strftime('%Y-%m-%d %H:%M')
+        } for req in user_requests]
+
+        return Response({
+            'catalog': items_data,
+            'my_requests': requests_data
+        })
+
+
 class RepaymentsAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -313,9 +390,77 @@ class NotificationsAPI(APIView):
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        notes = Notification.objects.filter(member=member).order_by('-created_at').values('id', 'message', 'is_read', 'created_at')
-        return Response(list(notes))
+
+        notifications = []
+        for note in Notification.objects.filter(member=member).order_by('-created_at'):
+            notifications.append({
+                'id': note.id,
+                'message': note.message,
+                'type': 'notification',
+                'is_read': note.is_read,
+                'created_at': note.created_at.strftime('%Y-%m-%d %H:%M')
+            })
+
+        active_notices = AdminNotice.objects.filter(is_active=True).filter(
+            Q(target_member=member) | Q(target_member__isnull=True)
+        ).order_by('-created_at')
+
+        for notice in active_notices:
+            notifications.append({
+                'id': notice.id,
+                'type': 'admin_notice',
+                'title': notice.title,
+                'message': notice.message,
+                'created_at': notice.created_at.strftime('%Y-%m-%d %H:%M'),
+                'expires_at': notice.expires_at.strftime('%Y-%m-%d %H:%M') if notice.expires_at else None
+            })
+
+        notifications.sort(key=lambda item: item['created_at'], reverse=True)
+        return Response(notifications)
+
+
+class ChatAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        member = Member.objects.filter(user=request.user).first()
+        if not member:
+            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        room, _ = ChatRoom.objects.get_or_create(member=member)
+        messages = [
+            {
+                'id': msg.id,
+                'sender': msg.sender,
+                'content': msg.content,
+                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M')
+            }
+            for msg in room.messages.order_by('created_at')
+        ]
+        return Response({
+            'room_id': room.id,
+            'subject': room.subject,
+            'messages': messages
+        })
+
+    def post(self, request):
+        member = Member.objects.filter(user=request.user).first()
+        if not member:
+            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        content = request.data.get('content')
+        if not content:
+            return Response({'error': 'Message content is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        room, _ = ChatRoom.objects.get_or_create(member=member)
+        msg = ChatMessage.objects.create(room=room, sender=ChatMessage.SenderType.MEMBER, content=content)
+
+        return Response({
+            'id': msg.id,
+            'sender': msg.sender,
+            'content': msg.content,
+            'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M')
+        }, status=status.HTTP_201_CREATED)
 
 
 @login_required
