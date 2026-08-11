@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: dhananjay-yuva
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn DhananjayYuva.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: DEBUG
+        value: "False"
