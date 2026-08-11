@@ -18,7 +18,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-change-i
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # Reads ALLOWED_HOSTS or HOST env vars, defaults to '*'
-_hosts = os.environ.get('ALLOWED_HOSTS', os.environ.get('HOST', '*'))
+_hosts = os.environ.get('ALLOWED_HOSTS', 'dhananjay-yuva.onrender.com, .onrender.com, localhost, 127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in _hosts.split(',') if host.strip()]
 
 
