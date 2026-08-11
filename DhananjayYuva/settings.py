@@ -125,6 +125,8 @@ STORAGES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+LOGIN_URL = '/login/'
+
 
 # Django REST Framework
 REST_FRAMEWORK = {
