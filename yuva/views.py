@@ -26,6 +26,21 @@ from .forms import LoginForm, MemberRegistrationForm
 
 
 # ==========================================
+# HELPER: ROLE-BASED ACCESS CONTROL
+# ==========================================
+def is_basic_user(member):
+    """
+    Checks if a member profile is restricted to basic user features.
+    Basic users lack full member operations like Savings, Attendance, and Dashboard.
+    """
+    if not member:
+        return True
+    role = str(getattr(member, 'role', '')).lower().strip()
+    # Consider roles like 'user', 'basic', 'pending', or empty strings as basic users.
+    return role in ['user', 'basic', 'pending', '']
+
+
+# ==========================================
 # 0. AUTHENTICATION VIEWS
 # ==========================================
 def login_view(request):
@@ -70,6 +85,9 @@ def signup_view(request):
 @login_required
 def member_dashboard(request): 
     member = Member.objects.filter(user=request.user).first()
+    # Restricted to Members
+    if is_basic_user(member):
+        return redirect('member_profile')
     return render(request, 'member/dashboard.html', {'member': member})
 
 @login_required
@@ -78,10 +96,14 @@ def member_chat_view(request):
 
 @login_required
 def member_savings_view(request): 
+    member = Member.objects.filter(user=request.user).first()
+    # Restricted to Members
+    if is_basic_user(member):
+        return redirect('member_profile')
     return render(request, 'member/savings.html')
 
 @login_required
-@ensure_csrf_cookie  # Ensures frontend JS can access CSRF token for payments
+@ensure_csrf_cookie  
 def member_loans_view(request): 
     return render(request, 'member/loans.html')
 
@@ -97,11 +119,13 @@ def request_loan(request):
 def member_passbook_view(request):
     return render(request, 'member/passbook.html')
 
-
 @login_required
 def member_attendance_view(request):
+    member = Member.objects.filter(user=request.user).first()
+    # Restricted to Members
+    if is_basic_user(member):
+        return redirect('member_profile')
     return render(request, 'member/attendance.html')
-
 
 @login_required
 def member_rentals_view(request):
@@ -117,6 +141,10 @@ class DashboardAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Restricted to Members
+        if is_basic_user(member):
+            return Response({'error': 'Dashboard access is restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
+            
         if not member:
             return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -140,21 +168,18 @@ class DashboardAPI(APIView):
         
         current_date = datetime.now().replace(day=1)
         
-        # Generate past 6 months dynamically (Oldest to Newest)
         for i in range(5, -1, -1):
             month_target = current_date - relativedelta(months=i)
             chart_labels.append(month_target.strftime('%b'))
             
             next_month = month_target + relativedelta(months=1)
             
-            # Cumulative savings calculation up to target month
             past_savings = SavingsTransaction.objects.filter(member=member, date__lt=next_month)
             monthly_savings_sum = sum(
                 float(t.amount) if t.transaction_type.lower() == 'deposit' else -float(t.amount) 
                 for t in past_savings
             )
             
-            # Cumulative approved loan principal sum up to target month
             monthly_loan_sum = Loan.objects.filter(
                 member=member,
                 date__lt=next_month,
@@ -166,7 +191,7 @@ class DashboardAPI(APIView):
 
         return Response({
             'total_savings': round(total_savings, 2),
-            'share_capital': round(total_savings * 0.1, 2),  # Estimated or tied to savings rule
+            'share_capital': round(total_savings * 0.1, 2),  
             'credit_standing': 'Grade A+',
             'active_loans_count': active_loans_count,
             'recent_transactions': tx_data,
@@ -181,8 +206,9 @@ class SavingsAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        if not member:
-            return Response([], status=status.HTTP_200_OK)
+        # Restricted to Members
+        if is_basic_user(member):
+            return Response({'error': 'Savings features are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
             
         savings = SavingsTransaction.objects.filter(member=member).order_by('date')
         running_balance = Decimal('0.00')
@@ -200,6 +226,10 @@ class SavingsAPI(APIView):
 
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Restricted to Members
+        if is_basic_user(member):
+            return Response({'error': 'Savings features are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
+            
         amount = request.data.get('amount')
         if not amount:
             return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -216,8 +246,9 @@ class LoansAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Available to both Users & Members
         if not member:
-            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         loans = Loan.objects.filter(member=member).order_by('-date')
         data = []
@@ -248,8 +279,9 @@ class LoansAPI(APIView):
         
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Available to both Users & Members
         if not member:
-            return Response({'error': 'No Member profile found.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No profile found.'}, status=status.HTTP_400_BAD_REQUEST)
             
         amount = request.data.get('amount')
         tenure_months = request.data.get('tenure_months', 12)
@@ -271,46 +303,89 @@ class ProfileAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Available to both Users & Members
         if not member:
-            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
             
-        full_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-            
+        # Calculate profile completion percentage across 6 core fields
+        fields = [
+            member.name,
+            member.gender,
+            request.user.email,
+            member.phone,
+            member.village,
+            member.address
+        ]
+        filled = sum(1 for f in fields if f and str(f).strip())
+        profile_completion = int((filled / len(fields)) * 100)
+        
+        # Format updated_at timestamp for the frontend view
+        updated_at_str = None
+        if member.updated_at:
+            updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p")
+
         return Response({
-            'name': full_name,
+            'username': request.user.username,
+            'email': request.user.email,
+            'name': member.name or '',
+            'gender': member.gender or '',
             'phone': member.phone,
             'village': member.village,
             'address': member.address,
             'role': member.role,
-            'email': request.user.email,
-            'username': request.user.username
+            'profile_completion': profile_completion,
+            'updated_at': updated_at_str
         })
         
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
             
         with transaction.atomic():
-            full_name = request.data.get('name', '')
-            if full_name:
-                name_parts = full_name.split(' ', 1)
-                request.user.first_name = name_parts[0]
-                request.user.last_name = name_parts[1] if len(name_parts) > 1 else ''
-                request.user.save()
+            # Update Name and Gender directly on the Member model
+            if 'name' in request.data:
+                member.name = request.data.get('name', '')
                 
+            if 'gender' in request.data:
+                member.gender = request.data.get('gender', '')
+
             member.phone = request.data.get('phone', member.phone)
             member.village = request.data.get('village', member.village)
             member.address = request.data.get('address', member.address)
-            member.role = request.data.get('role', member.role)
-            member.save()
+            
+            # Standard users shouldn't be able to self-assign full member roles to bypass restrictions
+            requested_role = request.data.get('role', member.role)
+            if not is_basic_user(member) or requested_role == 'user': 
+                member.role = requested_role
+                
+            # Saving member updates the updated_at timestamp via auto_now=True
+            member.save() 
             
             email = request.data.get('email')
             if email:
                 request.user.email = email
                 request.user.save()
-        
-        return Response({'message': 'Profile updated successfully!'})
+
+        # Recalculate completion percentage after saving updates
+        fields = [
+            member.name,
+            member.gender,
+            request.user.email,
+            member.phone,
+            member.village,
+            member.address
+        ]
+        filled = sum(1 for f in fields if f and str(f).strip())
+        profile_completion = int((filled / len(fields)) * 100)
+
+        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if member.updated_at else "Just now"
+
+        return Response({
+            'message': 'Profile updated successfully!',
+            'profile_completion': profile_completion,
+            'updated_at': updated_at_str
+        })
 
 
 class MemberAttendanceAPI(APIView):
@@ -318,8 +393,12 @@ class MemberAttendanceAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
+        # Restricted to Members
+        if is_basic_user(member):
+            return Response({'error': 'Attendance records are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
+            
         if not member:
-            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         records = AttendanceRecord.objects.filter(member=member).order_by('-date')
         response_data = {
@@ -343,6 +422,7 @@ class MemberRentalDirectoryAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Available to both Users & Members
         items = RentalItem.objects.filter(is_active=True)
         items_data = [{
             'id': item.id,
@@ -350,7 +430,7 @@ class MemberRentalDirectoryAPI(APIView):
             'description': item.description,
             'rental_fee': str(item.rental_fee),
             'deposit_fee': str(item.deposit_fee),
-            'price': str(item.rental_fee),  # Added 'price' mapping for the frontend JS
+            'price': str(item.rental_fee), 
             'available_quantity': item.available_quantity,
             'image_url': item.image.url if item.image else None
         } for item in items]
@@ -375,9 +455,10 @@ class RepaymentsAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
             
         repayments = Repayment.objects.filter(loan__member=member).order_by('-date').values('loan__id', 'amount_paid', 'date')
         return Response(list(repayments))
@@ -387,9 +468,10 @@ class NotificationsAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
         notifications = []
         for note in Notification.objects.filter(member=member).order_by('-created_at'):
@@ -423,9 +505,10 @@ class ChatAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
         room, _ = ChatRoom.objects.get_or_create(member=member)
         messages = [
@@ -446,7 +529,7 @@ class ChatAPI(APIView):
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
         content = request.data.get('content')
         if not content:
@@ -481,9 +564,10 @@ class DocumentUploadAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
         file = request.FILES.get('file')
         if file:
             Document.objects.create(member=member, file=file)
@@ -495,11 +579,13 @@ class PassbookAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response([], status=status.HTTP_200_OK)
 
         transactions = []
+        # Even if users don't have access to Savings API, if they have past transactions, they can view them
         for s in SavingsTransaction.objects.filter(member=member):
             transactions.append({
                 'date': s.date,
@@ -600,7 +686,7 @@ class RazorpayVerifyAPI(APIView):
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
         if not member:
-            return Response({'error': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         razorpay_order_id = request.data.get('razorpay_order_id')
         razorpay_payment_id = request.data.get('razorpay_payment_id')
@@ -635,6 +721,10 @@ class RazorpayVerifyAPI(APIView):
 
             with transaction.atomic():
                 if payment_type == 'savings':
+                    # Explicit role block to prevent basic users from modifying savings through the payment gateway
+                    if is_basic_user(member):
+                        return Response({'error': 'Savings deposits require full member privileges.'}, status=status.HTTP_403_FORBIDDEN)
+                    
                     SavingsTransaction.objects.create(
                         member=member, 
                         amount=amount_decimal, 

@@ -180,7 +180,7 @@ class DashboardMetricsAPI(APIView):
                 "active_loans": {"value": active_loans},
                 "total_members": {"value": total_members},
                 "default_rate": {"value": default_rate},
-                "latest_session_status": {"value": session_status} # INJECTED HERE
+                "latest_session_status": {"value": session_status} 
             },
             "charts": {
                 "cashflow": cashflow_data,
@@ -341,7 +341,6 @@ class AdminMeetingAPI(APIView):
     def post(self, request):
         data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         
-        # Strip time component to fit DateField format (YYYY-MM-DD)
         if 'date' in data and data['date']:
             data['date'] = str(data['date']).split('T')[0]
 
@@ -370,7 +369,6 @@ class AdminMeetingAPI(APIView):
 
         data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         
-        # Strip time component to fit DateField format (YYYY-MM-DD)
         if 'date' in data and data['date']:
             data['date'] = str(data['date']).split('T')[0]
 
@@ -457,14 +455,13 @@ class AdminAttendanceAPI(APIView):
             except Meeting.DoesNotExist:
                 continue
 
-            # AUTOMATED FINE GENERATION
             try:
                 fine_val = Decimal(str(fine_amount)) if fine_amount else Decimal('0.00')
             except (ValueError, TypeError):
                 fine_val = Decimal('0.00')
 
             if status_val == AttendanceRecord.Status.ABSENT and fine_val == 0:
-                fine_amount = Decimal('50.00')  # Default fine configuration
+                fine_amount = Decimal('50.00')  
 
             record, created = AttendanceRecord.objects.update_or_create(
                 member_id=member_id,
@@ -503,6 +500,10 @@ class MemberAttendanceAPI(APIView):
         except Member.DoesNotExist:
             return Response({'detail': 'Member profile not found.'}, status=status.HTTP_404_NOT_FOUND)
         
+        # --- ENFORCING RBAC: Attendance is restricted to full members ---
+        if member.role == Member.Role.USER:
+            return Response({'error': 'Attendance records are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
+        
         records = AttendanceRecord.objects.filter(member=member).select_related('meeting').order_by('-date')
         serializer = AttendanceRecordSerializer(records, many=True)
         
@@ -523,7 +524,6 @@ class MemberAttendanceAPI(APIView):
 # ==========================================
 class AdminFinanceAPI(View):
     def get(self, request):
-        # DATE FILTERING
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
 
@@ -595,7 +595,6 @@ class AdminReportAPI(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        # DATE FILTERING
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
@@ -833,7 +832,10 @@ class MemberDetailAPI(APIView):
         data = request.data.copy()
         full_name = data.get('full_name', '').strip()
         email = data.get('email', '').strip()
-        role_value = data.get('role', 'MEMBER').strip().upper()
+        
+        # Admin explicitly defines the role (defaults to USER if not specified by admin)
+        role_value = data.get('role', 'user').strip().lower()
+        member_role = Member.Role.MEMBER if role_value == 'member' else Member.Role.USER
 
         username_base = email.split('@')[0] if email else full_name.split(' ')[0].lower() if full_name else 'member'
         username = username_base or 'member'
@@ -854,13 +856,17 @@ class MemberDetailAPI(APIView):
         user.last_name = last_name
         user.set_unusable_password()
         
-        if role_value == 'ADMIN':
+        if role_value == 'admin':
             user.is_staff = True
             user.is_superuser = True
         user.save()
-        
-        return Response({'status': 'success', 'username': username}, status=status.HTTP_201_CREATED)
 
+        # Update or create the member profile with the admin-defined role
+        member, _ = Member.objects.get_or_create(user=user)
+        member.role = member_role
+        member.save()
+        
+        return Response({'status': 'success', 'username': username, 'role': member.role}, status=status.HTTP_201_CREATED)
 
 # ==========================================
 # 10. Loan Detail API
@@ -879,7 +885,6 @@ class LoanDetailAPI(APIView):
         if 'status' in data and isinstance(data['status'], str):
             new_status = data['status'].lower()
             
-            # STRICT STATUS TRANSITION VALIDATION
             if loan.status == Loan.Status.COMPLETED and new_status != Loan.Status.COMPLETED:
                 return Response({"error": "Cannot change the status of an already completed loan."}, status=status.HTTP_400_BAD_REQUEST)
             if loan.status == Loan.Status.REJECTED and new_status == Loan.Status.PENDING:

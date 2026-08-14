@@ -12,16 +12,26 @@ class Member(models.Model):
         MEMBER = 'member', 'Member'
         USER = 'user', 'User'
 
+    class Gender(models.TextChoices):
+        MALE = 'male', 'Male'
+        FEMALE = 'female', 'Female'
+        OTHER = 'other', 'Other'
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='yuva_member'
+    )
+    name = models.CharField(max_length=150, blank=True, null=True)
+    gender = models.CharField(
+        max_length=20, choices=Gender.choices, blank=True, null=True
     )
     phone = models.CharField(max_length=15, blank=True, null=True)
     village = models.CharField(max_length=100, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, default='Active')
     role = models.CharField(
-        max_length=20, choices=Role.choices, default=Role.MEMBER
+        max_length=20, choices=Role.choices, default=Role.USER
     )
+    updated_at = models.DateTimeField(auto_now=True)
 
     @property
     def share_capital(self):
