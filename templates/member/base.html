@@ -162,23 +162,9 @@
         <!-- Fixed Sidebar Header -->
         <div class="h-20 flex-shrink-0 flex items-center px-6 justify-between border-b border-slate-100 dark:border-slate-800/80">
             <div class="flex items-center gap-3.5">
-                <!-- Logo Image Container -->
-                <div class="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex-shrink-0">
-                    
-                    <!-- Light Theme Logo (Hidden in dark mode) -->
-                    <img src="{% static 'images/logo-light.png' %}" 
-                        alt="Dhananjay Yuva Logo" 
-                        class="w-full h-full object-contain p-1 dark:hidden"
-                        onerror="this.classList.add('!hidden'); this.parentElement.querySelector('i').classList.remove('hidden');">
-                    
-                    <!-- Dark Theme Logo (Shown only in dark mode) -->
-                    <img src="{% static 'images/logo-dark.png' %}" 
-                        alt="Dhananjay Yuva Logo" 
-                        class="w-full h-full object-contain p-1 hidden dark:block"
-                        onerror="this.classList.add('!hidden'); this.parentElement.querySelector('i').classList.remove('hidden');">
-                    
-                    <!-- Fallback Icon if either image fails to load -->
-                    <i data-lucide="shield" class="w-5 h-5 text-emerald-500 hidden"></i>
+                <!-- Logo Icon Container -->
+                <div class="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-sm flex-shrink-0">
+                    <i data-lucide="shield" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <span class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Dhananjay<span class="text-emerald-500">Yuva</span></span>
