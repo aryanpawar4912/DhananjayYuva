@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" 
       x-data="{ 
@@ -158,21 +159,36 @@
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
             class="fixed inset-y-0 left-0 z-50 w-72 lg:sticky lg:top-0 lg:h-screen bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:flex-shrink-0 shadow-2xl lg:shadow-none print:hidden">
             
-            <!-- Fixed Sidebar Header -->
-            <div class="h-20 flex-shrink-0 flex items-center px-6 justify-between border-b border-slate-100 dark:border-slate-800/80">
-                <div class="flex items-center gap-3.5">
-                    <div class="bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white p-2.5 rounded-2xl shadow-glow ring-1 ring-emerald-400/30 flex items-center justify-center">
-                        <i data-lucide="indian-rupee" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <span class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Dhananjay<span class="text-emerald-500">Yuva</span></span>
-                        <span class="block text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-widest uppercase">Member Portal</span>
-                    </div>
+        <!-- Fixed Sidebar Header -->
+        <div class="h-20 flex-shrink-0 flex items-center px-6 justify-between border-b border-slate-100 dark:border-slate-800/80">
+            <div class="flex items-center gap-3.5">
+                <!-- Logo Image Container -->
+                <div class="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex-shrink-0">
+                    
+                    <!-- Light Theme Logo (Hidden in dark mode) -->
+                    <img src="{% static 'images/logo-light.png' %}" 
+                        alt="Dhananjay Yuva Logo" 
+                        class="w-full h-full object-contain p-1 dark:hidden"
+                        onerror="this.classList.add('!hidden'); this.parentElement.querySelector('i').classList.remove('hidden');">
+                    
+                    <!-- Dark Theme Logo (Shown only in dark mode) -->
+                    <img src="{% static 'images/logo-dark.png' %}" 
+                        alt="Dhananjay Yuva Logo" 
+                        class="w-full h-full object-contain p-1 hidden dark:block"
+                        onerror="this.classList.add('!hidden'); this.parentElement.querySelector('i').classList.remove('hidden');">
+                    
+                    <!-- Fallback Icon if either image fails to load -->
+                    <i data-lucide="shield" class="w-5 h-5 text-emerald-500 hidden"></i>
                 </div>
-                <button @click="sidebarOpen = false" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors" aria-label="Close Sidebar">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Dhananjay<span class="text-emerald-500">Yuva</span></span>
+                    <span class="block text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-widest uppercase">Member Portal</span>
+                </div>
             </div>
+            <button @click="sidebarOpen = false" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors" aria-label="Close Sidebar">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
             
             <!-- Internal Scrollable Navigation Area -->
             <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto no-scrollbar">
