@@ -152,10 +152,11 @@ class DashboardAPI(APIView):
         active_loans_count = Loan.objects.filter(member=member, status__iexact='approved').count()
         recent_savings = SavingsTransaction.objects.filter(member=member).order_by('-date')[:5]
         
+        # Safely handle missing transaction types or dates
         tx_data = [{
-            'transaction_type': f"Savings {t.transaction_type.capitalize()}",
-            'amount': str(t.amount),
-            'date': t.date.strftime("%Y-%m-%d %H:%M")
+            'transaction_type': f"Savings {str(t.transaction_type or 'deposit').capitalize()}",
+            'amount': str(t.amount or Decimal('0.00')),
+            'date': t.date.strftime("%Y-%m-%d %H:%M") if t.date else "N/A"
         } for t in recent_savings]
 
         # 2. Dynamic 6-Month Chart Aggregation
@@ -208,13 +209,16 @@ class SavingsAPI(APIView):
         running_balance = Decimal('0.00')
         data = []
         for s in savings:
-            running_balance += s.amount if s.transaction_type == 'deposit' else -s.amount
+            amount = s.amount or Decimal('0.00')
+            tx_type = s.transaction_type or 'deposit'
+            running_balance += amount if tx_type == 'deposit' else -amount
+            
             data.append({
                 'id': s.id,
-                'amount': str(s.amount),
-                'transaction_type': s.transaction_type,
+                'amount': str(amount),
+                'transaction_type': tx_type,
                 'running_balance': str(running_balance),
-                'date': s.date.strftime("%Y-%m-%d %H:%M")
+                'date': s.date.strftime("%Y-%m-%d %H:%M") if s.date else "N/A"
             })
         return Response(list(reversed(data)))
 
@@ -266,7 +270,7 @@ class LoansAPI(APIView):
                 'tenure_months': loan.tenure_months,
                 'emi_amount': str(loan.emi_amount),
                 'status': loan.status,
-                'date': loan.date.strftime("%Y-%m-%d %H:%M"),
+                'date': loan.date.strftime("%Y-%m-%d %H:%M") if getattr(loan, 'date', None) else "N/A",
                 'installments': inst_data
             })
             
@@ -388,10 +392,10 @@ class MemberAttendanceAPI(APIView):
             'total_fines': float(records.filter(status=AttendanceRecord.Status.ABSENT).aggregate(total=Sum('fine_amount'))['total'] or 0),
             'records': [
                 {
-                    'date': rec.date.isoformat(),
+                    'date': rec.date.isoformat() if rec.date else "N/A",
                     'status': rec.status,
-                    'fine_amount': float(rec.fine_amount),
-                    'meeting_title': rec.meeting.title if rec.meeting else None
+                    'fine_amount': float(rec.fine_amount or 0),
+                    'meeting_title': rec.meeting.title if getattr(rec, 'meeting', None) else None
                 }
                 for rec in records
             ]
@@ -422,7 +426,7 @@ class MemberRentalDirectoryAPI(APIView):
             'start_date': req.start_date.strftime('%Y-%m-%d') if getattr(req, 'start_date', None) else "N/A",
             'end_date': req.end_date.strftime('%Y-%m-%d') if getattr(req, 'end_date', None) else "N/A",
             'status': req.status,
-            'created_at': req.created_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': req.created_at.strftime('%Y-%m-%d %H:%M') if getattr(req, 'created_at', None) else "N/A"
         } for req in user_requests]
 
         return Response({
@@ -458,7 +462,7 @@ class NotificationsAPI(APIView):
                 'message': note.message,
                 'type': 'notification',
                 'is_read': note.is_read,
-                'created_at': note.created_at.strftime('%Y-%m-%d %H:%M')
+                'created_at': note.created_at.strftime('%Y-%m-%d %H:%M') if getattr(note, 'created_at', None) else "N/A"
             })
 
         active_notices = AdminNotice.objects.filter(is_active=True).filter(
@@ -471,8 +475,8 @@ class NotificationsAPI(APIView):
                 'type': 'admin_notice',
                 'title': notice.title,
                 'message': notice.message,
-                'created_at': notice.created_at.strftime('%Y-%m-%d %H:%M'),
-                'expires_at': notice.expires_at.strftime('%Y-%m-%d %H:%M') if notice.expires_at else None
+                'created_at': notice.created_at.strftime('%Y-%m-%d %H:%M') if getattr(notice, 'created_at', None) else "N/A",
+                'expires_at': notice.expires_at.strftime('%Y-%m-%d %H:%M') if getattr(notice, 'expires_at', None) else None
             })
 
         notifications.sort(key=lambda item: item['created_at'], reverse=True)
@@ -493,7 +497,7 @@ class ChatAPI(APIView):
                 'id': msg.id,
                 'sender': msg.sender,
                 'content': msg.content,
-                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M')
+                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M') if getattr(msg, 'created_at', None) else "N/A"
             }
             for msg in room.messages.order_by('created_at')
         ]
@@ -519,7 +523,7 @@ class ChatAPI(APIView):
             'id': msg.id,
             'sender': msg.sender,
             'content': msg.content,
-            'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M') if getattr(msg, 'created_at', None) else "N/A"
         }, status=status.HTTP_201_CREATED)
 
 
@@ -611,7 +615,7 @@ class AdminLoanManagementAPI(APIView):
             'member': l.member.user.username,
             'amount': str(l.amount),
             'status': l.status,
-            'date': l.date.strftime("%Y-%m-%d")
+            'date': l.date.strftime("%Y-%m-%d") if getattr(l, 'date', None) else "N/A"
         } for l in loans]
         return Response(data)
 
