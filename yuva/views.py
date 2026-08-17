@@ -1,3 +1,4 @@
+import os
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
@@ -560,33 +561,44 @@ class PassbookAPI(APIView):
 
         transactions = []
         for s in SavingsTransaction.objects.filter(member=member):
+            if not s.date:
+                continue
+            tx_type = str(s.transaction_type or 'deposit')
             transactions.append({
                 'date': s.date,
-                'description': f"Savings {s.transaction_type.capitalize()}",
-                'type': s.transaction_type,
-                'amount': s.amount,
+                'description': f"Savings {tx_type.capitalize()}",
+                'type': tx_type,
+                'amount': s.amount or Decimal('0.00'),
                 'category': 'savings'
             })
 
         for r in Repayment.objects.filter(loan__member=member):
+            if not r.date:
+                continue
             transactions.append({
                 'date': r.date,
                 'description': f"Loan EMI Payment (Loan #{r.loan.id})",
                 'type': 'withdrawal',
-                'amount': r.amount_paid,
+                'amount': r.amount_paid or Decimal('0.00'),
                 'category': 'repayment'
             })
 
-        transactions.sort(key=lambda x: x['date'])
-        data = [{
-            'date': t['date'].strftime("%Y-%m-%d %H:%M"),
-            'description': t['description'],
-            'type': t['type'],
-            'amount': str(t['amount']),
-            'category': t['category']
-        } for t in transactions]
+        # Sort safely by date descending
+        transactions.sort(key=lambda x: x['date'], reverse=True)
+        
+        data = []
+        for t in transactions:
+            date_val = t['date']
+            date_str = date_val.strftime("%Y-%m-%d %H:%M") if hasattr(date_val, 'strftime') else str(date_val)
+            data.append({
+                'date': date_str,
+                'description': t['description'],
+                'type': t['type'],
+                'amount': str(t['amount']),
+                'category': t['category']
+            })
 
-        return Response(list(reversed(data)))
+        return Response(data)
 
 
 class AdminLoanManagementAPI(APIView):
