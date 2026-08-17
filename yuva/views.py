@@ -1,6 +1,6 @@
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import razorpay
 from django.conf import settings
 from django.db import transaction
@@ -36,7 +36,6 @@ def is_basic_user(member):
     if not member:
         return True
     role = str(getattr(member, 'role', '')).lower().strip()
-    # Consider roles like 'user', 'basic', 'pending', or empty strings as basic users.
     return role in ['user', 'basic', 'pending', '']
 
 
@@ -85,7 +84,6 @@ def signup_view(request):
 @login_required
 def member_dashboard(request): 
     member = Member.objects.filter(user=request.user).first()
-    # Restricted to Members
     if is_basic_user(member):
         return redirect('member_profile')
     return render(request, 'member/dashboard.html', {'member': member})
@@ -97,7 +95,6 @@ def member_chat_view(request):
 @login_required
 def member_savings_view(request): 
     member = Member.objects.filter(user=request.user).first()
-    # Restricted to Members
     if is_basic_user(member):
         return redirect('member_profile')
     return render(request, 'member/savings.html')
@@ -122,7 +119,6 @@ def member_passbook_view(request):
 @login_required
 def member_attendance_view(request):
     member = Member.objects.filter(user=request.user).first()
-    # Restricted to Members
     if is_basic_user(member):
         return redirect('member_profile')
     return render(request, 'member/attendance.html')
@@ -141,16 +137,16 @@ class DashboardAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Restricted to Members
         if is_basic_user(member):
             return Response({'error': 'Dashboard access is restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
             
         if not member:
             return Response({'error': 'Member not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        # 1. Core Metrics
-        savings = SavingsTransaction.objects.filter(member=member)
-        total_savings = sum(float(t.amount) if t.transaction_type.lower() == 'deposit' else -float(t.amount) for t in savings)
+        # 1. Core Metrics (Using Database Aggregation)
+        deposits = SavingsTransaction.objects.filter(member=member, transaction_type__iexact='deposit').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        withdrawals = SavingsTransaction.objects.filter(member=member, transaction_type__iexact='withdrawal').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        total_savings = deposits - withdrawals
                 
         active_loans_count = Loan.objects.filter(member=member, status__iexact='approved').count()
         recent_savings = SavingsTransaction.objects.filter(member=member).order_by('-date')[:5]
@@ -175,23 +171,21 @@ class DashboardAPI(APIView):
             next_month = month_target + relativedelta(months=1)
             
             past_savings = SavingsTransaction.objects.filter(member=member, date__lt=next_month)
-            monthly_savings_sum = sum(
-                float(t.amount) if t.transaction_type.lower() == 'deposit' else -float(t.amount) 
-                for t in past_savings
-            )
+            month_dep = past_savings.filter(transaction_type__iexact='deposit').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            month_wth = past_savings.filter(transaction_type__iexact='withdrawal').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             monthly_loan_sum = Loan.objects.filter(
                 member=member,
                 date__lt=next_month,
                 status__iexact='approved'
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            chart_savings.append(float(monthly_savings_sum))
+            chart_savings.append(float(month_dep - month_wth))
             chart_loans.append(float(monthly_loan_sum))
 
         return Response({
-            'total_savings': round(total_savings, 2),
-            'share_capital': round(total_savings * 0.1, 2),  
+            'total_savings': float(round(total_savings, 2)),
+            'share_capital': float(round(total_savings * Decimal('0.1'), 2)),  
             'credit_standing': 'Grade A+',
             'active_loans_count': active_loans_count,
             'recent_transactions': tx_data,
@@ -206,7 +200,6 @@ class SavingsAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Restricted to Members
         if is_basic_user(member):
             return Response({'error': 'Savings features are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
             
@@ -226,13 +219,15 @@ class SavingsAPI(APIView):
 
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Restricted to Members
         if is_basic_user(member):
             return Response({'error': 'Savings features are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
             
-        amount = request.data.get('amount')
-        if not amount:
-            return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+            if amount <= 0:
+                raise ValueError
+        except (ValueError, InvalidOperation, TypeError):
+            return Response({'error': 'A valid positive amount is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             SavingsTransaction.objects.create(member=member, amount=amount, transaction_type='deposit')
@@ -246,7 +241,6 @@ class LoansAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Available to both Users & Members
         if not member:
             return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -279,23 +273,24 @@ class LoansAPI(APIView):
         
     def post(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Available to both Users & Members
         if not member:
             return Response({'error': 'No profile found.'}, status=status.HTTP_400_BAD_REQUEST)
             
-        amount = request.data.get('amount')
-        tenure_months = request.data.get('tenure_months', 12)
-        
-        if amount:
-            with transaction.atomic():
-                loan = Loan.objects.create(member=member, amount=amount, tenure_months=tenure_months, status='pending')
-                Notification.objects.create(
-                    member=member, 
-                    message=f"Your loan request for ₹{amount} has been submitted. Estimated EMI: ₹{loan.emi_amount}/month."
-                )
-            return Response({'message': 'Loan requested successfully!', 'estimated_emi': loan.emi_amount}, status=status.HTTP_201_CREATED)
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+            tenure_months = int(request.data.get('tenure_months', 12))
+            if amount <= 0 or tenure_months <= 0:
+                raise ValueError
+        except (ValueError, InvalidOperation, TypeError):
+            return Response({'error': 'Valid positive amount and tenure are required'}, status=status.HTTP_400_BAD_REQUEST)
             
-        return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            loan = Loan.objects.create(member=member, amount=amount, tenure_months=tenure_months, status='pending')
+            Notification.objects.create(
+                member=member, 
+                message=f"Your loan request for ₹{amount} has been submitted. Estimated EMI: ₹{loan.emi_amount}/month."
+            )
+        return Response({'message': 'Loan requested successfully!', 'estimated_emi': str(loan.emi_amount)}, status=status.HTTP_201_CREATED)
 
 
 class ProfileAPI(APIView):
@@ -303,11 +298,9 @@ class ProfileAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Available to both Users & Members
         if not member:
             return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
             
-        # Calculate profile completion percentage across 6 core fields
         fields = [
             member.name,
             member.gender,
@@ -319,10 +312,7 @@ class ProfileAPI(APIView):
         filled = sum(1 for f in fields if f and str(f).strip())
         profile_completion = int((filled / len(fields)) * 100)
         
-        # Format updated_at timestamp for the frontend view
-        updated_at_str = None
-        if member.updated_at:
-            updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p")
+        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if member.updated_at else None
 
         return Response({
             'username': request.user.username,
@@ -343,23 +333,15 @@ class ProfileAPI(APIView):
             return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
             
         with transaction.atomic():
-            # Update Name and Gender directly on the Member model
             if 'name' in request.data:
                 member.name = request.data.get('name', '')
-                
             if 'gender' in request.data:
                 member.gender = request.data.get('gender', '')
 
             member.phone = request.data.get('phone', member.phone)
             member.village = request.data.get('village', member.village)
             member.address = request.data.get('address', member.address)
-            
-            # Standard users shouldn't be able to self-assign full member roles to bypass restrictions
-            requested_role = request.data.get('role', member.role)
-            if not is_basic_user(member) or requested_role == 'user': 
-                member.role = requested_role
                 
-            # Saving member updates the updated_at timestamp via auto_now=True
             member.save() 
             
             email = request.data.get('email')
@@ -367,7 +349,6 @@ class ProfileAPI(APIView):
                 request.user.email = email
                 request.user.save()
 
-        # Recalculate completion percentage after saving updates
         fields = [
             member.name,
             member.gender,
@@ -393,7 +374,6 @@ class MemberAttendanceAPI(APIView):
 
     def get(self, request):
         member = Member.objects.filter(user=request.user).first()
-        # Restricted to Members
         if is_basic_user(member):
             return Response({'error': 'Attendance records are restricted to full members.'}, status=status.HTTP_403_FORBIDDEN)
             
@@ -422,7 +402,6 @@ class MemberRentalDirectoryAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Available to both Users & Members
         items = RentalItem.objects.filter(is_active=True)
         items_data = [{
             'id': item.id,
@@ -439,8 +418,8 @@ class MemberRentalDirectoryAPI(APIView):
         requests_data = [{
             'id': req.id,
             'item_name': req.item.name,
-            'start_date': req.start_date.strftime('%Y-%m-%d'),
-            'end_date': req.end_date.strftime('%Y-%m-%d'),
+            'start_date': req.start_date.strftime('%Y-%m-%d') if getattr(req, 'start_date', None) else "N/A",
+            'end_date': req.end_date.strftime('%Y-%m-%d') if getattr(req, 'end_date', None) else "N/A",
             'status': req.status,
             'created_at': req.created_at.strftime('%Y-%m-%d %H:%M')
         } for req in user_requests]
@@ -455,7 +434,6 @@ class RepaymentsAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -468,7 +446,6 @@ class NotificationsAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -505,7 +482,6 @@ class ChatAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -564,7 +540,6 @@ class DocumentUploadAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -579,13 +554,11 @@ class PassbookAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Available to both Users & Members
         member = Member.objects.filter(user=request.user).first()
         if not member:
             return Response([], status=status.HTTP_200_OK)
 
         transactions = []
-        # Even if users don't have access to Savings API, if they have past transactions, they can view them
         for s in SavingsTransaction.objects.filter(member=member):
             transactions.append({
                 'date': s.date,
@@ -650,9 +623,12 @@ class RazorpayOrderAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        amount = request.data.get('amount')
-        if not amount:
-            return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+            if amount <= 0:
+                raise ValueError
+        except (ValueError, InvalidOperation, TypeError):
+            return Response({'error': 'Valid positive amount is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         key_id = getattr(settings, 'RAZORPAY_KEY_ID', '')
         key_secret = getattr(settings, 'RAZORPAY_KEY_SECRET', '')
@@ -663,7 +639,7 @@ class RazorpayOrderAPI(APIView):
         client = razorpay.Client(auth=(key_id, key_secret))
         
         try:
-            amount_in_paise = int(Decimal(str(amount)) * 100)
+            amount_in_paise = int(amount * 100)
             data = {
                 "amount": amount_in_paise,
                 "currency": "INR",
@@ -693,7 +669,6 @@ class RazorpayVerifyAPI(APIView):
         razorpay_signature = request.data.get('razorpay_signature')
         
         payment_type = request.data.get('type') 
-        amount = request.data.get('amount')
         loan_id = request.data.get('loan_id')
 
         if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
@@ -710,35 +685,41 @@ class RazorpayVerifyAPI(APIView):
         }
 
         try:
+            # 1. Verify that the signature is valid
             client.utility.verify_payment_signature(params_dict)
+            
+            # 2. Fetch the true payment amount from Razorpay (Prevents amount spoofing)
+            payment = client.payment.fetch(razorpay_payment_id)
+            if payment['status'] != 'captured':
+                return Response({'error': 'Payment not captured.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            actual_amount_decimal = Decimal(str(payment['amount'])) / Decimal('100')
+            
         except razorpay.errors.SignatureVerificationError:
             return Response({'error': 'Payment verification failed. Invalid signature.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': f'Verification error: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            amount_decimal = Decimal(str(amount)) if amount else Decimal('0.00')
-
             with transaction.atomic():
                 if payment_type == 'savings':
-                    # Explicit role block to prevent basic users from modifying savings through the payment gateway
                     if is_basic_user(member):
                         return Response({'error': 'Savings deposits require full member privileges.'}, status=status.HTTP_403_FORBIDDEN)
                     
                     SavingsTransaction.objects.create(
                         member=member, 
-                        amount=amount_decimal, 
+                        amount=actual_amount_decimal, 
                         transaction_type='deposit'
                     )
                     Notification.objects.create(
                         member=member, 
-                        message=f"Successfully deposited ₹{amount_decimal} to your savings account."
+                        message=f"Successfully deposited ₹{actual_amount_decimal} to your savings account."
                     )
                     return Response({'message': 'Savings deposit recorded successfully!'}, status=status.HTTP_200_OK)
 
                 elif payment_type == 'emi' and loan_id:
                     loan = Loan.objects.select_for_update().get(id=loan_id, member=member)
-                    Repayment.objects.create(loan=loan, amount_paid=amount_decimal)
+                    Repayment.objects.create(loan=loan, amount_paid=actual_amount_decimal)
                     
                     installment = LoanInstallment.objects.filter(loan=loan, is_paid=False).order_by('id').first()
                     if installment:
@@ -752,7 +733,7 @@ class RazorpayVerifyAPI(APIView):
 
                     Notification.objects.create(
                         member=member, 
-                        message=f"Successfully paid EMI of ₹{amount_decimal} for Loan #{loan.id}."
+                        message=f"Successfully paid EMI of ₹{actual_amount_decimal} for Loan #{loan.id}."
                     )
                     return Response({'message': 'EMI payment recorded successfully!'}, status=status.HTTP_200_OK)
 
