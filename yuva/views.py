@@ -1,4 +1,4 @@
-from datetime import datetime
+from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 import razorpay
@@ -166,10 +166,10 @@ class DashboardAPI(APIView):
         chart_savings = []
         chart_loans = []
         
-        current_date = datetime.now().replace(day=1)
+        current_time = timezone.now().replace(day=1)
         
         for i in range(5, -1, -1):
-            month_target = current_date - relativedelta(months=i)
+            month_target = current_time - relativedelta(months=i)
             chart_labels.append(month_target.strftime('%b'))
             
             next_month = month_target + relativedelta(months=1)
