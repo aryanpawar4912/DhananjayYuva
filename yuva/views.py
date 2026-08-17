@@ -1,4 +1,5 @@
 import os
+import datetime
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal, InvalidOperation
@@ -317,7 +318,7 @@ class ProfileAPI(APIView):
         filled = sum(1 for f in fields if f and str(f).strip())
         profile_completion = int((filled / len(fields)) * 100)
         
-        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if member.updated_at else None
+        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if getattr(member, 'updated_at', None) else None
 
         return Response({
             'username': request.user.username,
@@ -365,7 +366,7 @@ class ProfileAPI(APIView):
         filled = sum(1 for f in fields if f and str(f).strip())
         profile_completion = int((filled / len(fields)) * 100)
 
-        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if member.updated_at else "Just now"
+        updated_at_str = member.updated_at.strftime("%b %d, %Y, %I:%M %p") if getattr(member, 'updated_at', None) else "Just now"
 
         return Response({
             'message': 'Profile updated successfully!',
@@ -564,45 +565,61 @@ class PassbookAPI(APIView):
             return Response([], status=status.HTTP_200_OK)
 
         transactions = []
+
+        # 1. Process Savings Transactions
         for s in SavingsTransaction.objects.filter(member=member):
             if not s.date:
                 continue
-            tx_type = str(s.transaction_type or 'deposit')
+            
+            # Normalize date to naive datetime for safe sorting across date/datetime objects
+            dt = s.date
+            if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
+                dt = datetime.datetime.combine(dt, datetime.time.min)
+            if timezone.is_aware(dt):
+                dt = timezone.make_naive(dt)
+
+            tx_type = str(s.transaction_type or 'deposit').lower()
             transactions.append({
-                'date': s.date,
+                'date': dt,
                 'description': f"Savings {tx_type.capitalize()}",
                 'type': tx_type,
                 'amount': s.amount or Decimal('0.00'),
                 'category': 'savings'
             })
 
-        for r in Repayment.objects.filter(loan__member=member):
+        # 2. Process Repayments (with select_related to eliminate N+1 query execution)
+        for r in Repayment.objects.filter(loan__member=member).select_related('loan'):
             if not r.date:
                 continue
+
+            dt = r.date
+            if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
+                dt = datetime.datetime.combine(dt, datetime.time.min)
+            if timezone.is_aware(dt):
+                dt = timezone.make_naive(dt)
+
             transactions.append({
-                'date': r.date,
+                'date': dt,
                 'description': f"Loan EMI Payment (Loan #{r.loan.id})",
                 'type': 'withdrawal',
                 'amount': r.amount_paid or Decimal('0.00'),
                 'category': 'repayment'
             })
 
-        # Sort safely by date descending
-        transactions.sort(key=lambda x: x['date'], reverse=True)
-        
+        # 3. Sort chronologically (Oldest to Newest) so frontend running balances aggregate properly
+        transactions.sort(key=lambda x: x['date'])
+
         data = []
         for t in transactions:
-            date_val = t['date']
-            date_str = date_val.strftime("%Y-%m-%d %H:%M") if hasattr(date_val, 'strftime') else str(date_val)
             data.append({
-                'date': date_str,
+                'date': t['date'].strftime("%Y-%m-%d %H:%M"),
                 'description': t['description'],
                 'type': t['type'],
                 'amount': str(t['amount']),
                 'category': t['category']
             })
 
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class AdminLoanManagementAPI(APIView):

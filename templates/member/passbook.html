@@ -204,12 +204,10 @@
 
     <!-- PROFESSIONAL BANK STATEMENT HEADER (PRINT / PDF ONLY) -->
     <div class="hidden print:block mb-6 bg-white border-b-2 border-slate-900 pb-5">
-        <!-- Top Bank Branding Row -->
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
-                <!-- Official Logo Image with Fallback -->
                 <div class="w-12 h-12 flex items-center justify-center shrink-0">
-                    <img src="{% static 'images/logo-light.png' %}" alt="Official Bank Logo" class="max-w-full max-h-full object-contain" onError="this.onerror=null; this.outerHTML='<div class=\'bg-slate-900 text-white p-2.5 rounded-xl flex items-center justify-center\'><svg xmlns=\'http://www.w3.org/2000/svg\' class=\'w-7 h-7\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\'/></svg></div>';">
+                    <img src="{% static 'images/logo-light.png' %}" alt="Official Bank Logo" class="max-w-full max-h-full object-contain" onError="this.style.display='none';">
                 </div>
                 <div>
                     <h1 class="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">DHANANJAY YUVA</h1>
@@ -226,9 +224,7 @@
             </div>
         </div>
 
-        <!-- Account Holder & Summary Info Grid -->
         <div class="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-200 text-xs">
-            <!-- Member Details -->
             <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
                 <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Account Information</p>
                 <div class="flex justify-between"><span class="text-slate-500">Account Holder:</span> <span class="font-extrabold text-slate-900 uppercase">{{ request.user.username }}</span></div>
@@ -237,7 +233,6 @@
                 <div class="flex justify-between"><span class="text-slate-500">Currency:</span> <span class="font-bold text-slate-800">INR (₹)</span></div>
             </div>
 
-            <!-- Financial Position Snapshot -->
             <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
                 <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Statement Overview</p>
                 <div class="flex justify-between"><span class="text-slate-500">Total Credits (+):</span> <span id="pdf-summary-credits" class="font-bold text-emerald-700">₹0.00</span></div>
@@ -253,7 +248,6 @@
     <!-- Passbook Ledger Table Card -->
     <div class="fade-in-up delay-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl md:rounded-[2rem] border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden print-card-clean relative z-10">
         
-        <!-- Screen Table Header Controls (Hidden on Print) -->
         <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50 print:hidden">
             <div>
                 <h3 class="font-extrabold text-slate-900 dark:text-white flex items-center gap-2 text-base">
@@ -262,7 +256,6 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Filtered view of all account debits and credits</p>
             </div>
 
-            <!-- Search/Filter Input -->
             <div class="flex items-center gap-2">
                 <div class="relative w-full sm:w-64">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -271,7 +264,6 @@
             </div>
         </div>
 
-        <!-- Table Container -->
         <div class="overflow-x-auto print-table-container">
             <table class="w-full text-sm text-left whitespace-nowrap">
                 <thead class="bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-wider font-bold border-b border-slate-100 dark:border-slate-800">
@@ -296,7 +288,6 @@
             </table>
         </div>
 
-        <!-- Professional Print Footer & Signatures (PRINT / PDF ONLY) -->
         <div class="hidden print:block pt-10 pb-4 px-2 mt-8 border-t border-slate-300">
             <div class="flex justify-between items-end text-xs text-slate-700">
                 <div class="space-y-1">
@@ -332,37 +323,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let allTransactions = [];
 
-    // Format current date for printable bank statement header
-    const now = new Date();
-    document.getElementById('print-date').innerText = now.toLocaleString('en-IN', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-    });
+    const printDateEl = document.getElementById('print-date');
+    if (printDateEl) {
+        printDateEl.innerText = new Date().toLocaleString('en-IN', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+    }
 
-    // Fetch Passbook Data from API
     fetch('/api/passbook/')
         .then(res => res.json())
         .then(data => {
-            if (!data || !Array.isArray(data)) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
                 renderEmptyState();
                 return;
             }
 
-            allTransactions = data;
+            let runningBalance = 0;
+            let totalCredits = 0;
+            let totalDebits = 0;
+
+            allTransactions = data.map((item) => {
+                const isDeposit = item.type && (item.type.toLowerCase() === 'deposit' || item.type.toLowerCase() === 'credit');
+                const numAmount = parseFloat(item.amount) || 0;
+
+                if (isDeposit) {
+                    totalCredits += numAmount;
+                    runningBalance += numAmount;
+                } else {
+                    totalDebits += numAmount;
+                    runningBalance -= numAmount;
+                }
+
+                return {
+                    ...item,
+                    isDeposit,
+                    numAmount,
+                    currentBalance: runningBalance
+                };
+            });
+
+            updateSummaryStats(totalCredits, totalDebits, runningBalance, allTransactions.length);
             renderLedger(allTransactions);
         })
         .catch(err => {
             console.error('Error fetching passbook statement:', err);
-            document.getElementById('passbook-tbody').innerHTML = `
-                <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-rose-500 font-bold text-xs">
-                        Failed to load statement ledger records. Please refresh or try again later.
-                    </td>
-                </tr>`;
+            const tbody = document.getElementById('passbook-tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-rose-500 font-bold text-xs">
+                            Failed to load statement ledger records. Please refresh or try again later.
+                        </td>
+                    </tr>`;
+            }
         });
 
+    function updateSummaryStats(credits, debits, net, count) {
+        const formattedCredits = '₹' + credits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const formattedDebits = '₹' + debits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const formattedNet = '₹' + net.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+        document.getElementById('stat-total-count').innerText = count;
+        document.getElementById('stat-total-credits').innerText = formattedCredits;
+        document.getElementById('stat-total-debits').innerText = formattedDebits;
+        document.getElementById('stat-net-balance').innerText = formattedNet;
+
+        document.getElementById('pdf-summary-credits').innerText = formattedCredits;
+        document.getElementById('pdf-summary-debits').innerText = formattedDebits;
+        document.getElementById('pdf-summary-balance').innerText = formattedNet;
+    }
+
     function renderEmptyState() {
-        document.getElementById('passbook-tbody').innerHTML = `
+        const tbody = document.getElementById('passbook-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
@@ -379,40 +414,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderLedger(items) {
         const tbody = document.getElementById('passbook-tbody');
-        tbody.innerHTML = '';
+        if (!tbody) return;
 
         if (items.length === 0) {
             renderEmptyState();
             return;
         }
 
-        let totalCredits = 0;
-        let totalDebits = 0;
-        let runningBalance = 0;
+        let rowsHtml = '';
 
-        // Process chronological running balance
-        const processedRows = items.map((item) => {
-            const isDeposit = item.type && (item.type.toLowerCase() === 'deposit' || item.type.toLowerCase() === 'credit');
-            const numAmount = parseFloat(item.amount) || 0;
-
-            if (isDeposit) {
-                totalCredits += numAmount;
-                runningBalance += numAmount;
-            } else {
-                totalDebits += numAmount;
-                runningBalance -= numAmount;
-            }
-
-            return {
-                ...item,
-                isDeposit,
-                numAmount,
-                currentBalance: runningBalance
-            };
-        });
-
-        // Populate Table Rows
-        processedRows.forEach(item => {
+        items.forEach(item => {
             const badge = item.isDeposit 
                 ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800/60 print:border-none print:p-0 print:bg-transparent print:text-emerald-800">
                     <i data-lucide="arrow-down-left" class="w-3 h-3 print:hidden"></i> CR
@@ -426,17 +437,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 : 'text-rose-600 dark:text-rose-400 print:text-rose-800';
             
             const sign = item.isDeposit ? '+' : '-';
+            const dateStr = item.date || 'N/A';
+            const descStr = item.description || 'N/A';
 
-            tbody.innerHTML += `
+            rowsHtml += `
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors print:hover:bg-transparent">
                     <td class="px-6 py-3.5 text-slate-500 dark:text-slate-400 text-xs font-semibold print:py-2 print:text-slate-800">
                         <div class="flex items-center gap-2">
                             <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 print:hidden"></i>
-                            ${item.date}
+                            ${dateStr}
                         </div>
                     </td>
                     <td class="px-6 py-3.5 font-bold text-slate-800 dark:text-slate-200 text-xs md:text-sm print:py-2 print:text-slate-900">
-                        ${item.description}
+                        ${descStr}
                     </td>
                     <td class="px-6 py-3.5 print:py-2">${badge}</td>
                     <td class="px-6 py-3.5 text-right font-extrabold text-xs md:text-sm tabular-nums ${amountColor} print:py-2">
@@ -448,22 +461,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>`;
         });
 
-        // Update Dynamic Stats in Header Cards
-        const netBalance = totalCredits - totalDebits;
-        document.getElementById('stat-total-count').innerText = items.length;
-        document.getElementById('stat-total-credits').innerText = '₹' + totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('stat-total-debits').innerText = '₹' + totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('stat-net-balance').innerText = '₹' + netBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-
-        // Update PDF Specific Header Summaries
-        document.getElementById('pdf-summary-credits').innerText = '₹' + totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('pdf-summary-debits').innerText = '₹' + totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('pdf-summary-balance').innerText = '₹' + netBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-
+        tbody.innerHTML = rowsHtml;
         if (window.lucide) lucide.createIcons();
     }
 
-    // Client-side Ledger Search Filter
     const searchInput = document.getElementById('ledger-search');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
