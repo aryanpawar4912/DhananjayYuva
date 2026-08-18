@@ -159,10 +159,11 @@
                         <th class="pb-3 px-4 text-right">Fee / Deposit</th>
                         <th class="pb-3 px-4 text-center">Rental Status</th>
                         <th class="pb-3 px-4 text-right">Requested Date</th>
+                        <th class="pb-3 px-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="rentalHistoryTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
-                    <tr><td colspan="5" class="text-center py-12 text-slate-400">Loading history logs...</td></tr>
+                    <tr><td colspan="6" class="text-center py-12 text-slate-400">Loading history logs...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -233,6 +234,58 @@
             <div class="flex gap-3 pt-2">
                 <button type="button" onclick="closeEditModal()" class="w-1/2 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-all">Cancel</button>
                 <button type="submit" id="editSubmitBtn" class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-md transition-all">Update Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- RENTAL REQUEST REVIEW MODAL DIALOG -->
+<div id="reviewStatusModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="glass-panel bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-md mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Review Rental Request</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Update status decision for member request</p>
+            </div>
+            <button onclick="closeReviewModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Details Summary Box -->
+        <div class="p-3.5 mb-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 text-xs space-y-1.5">
+            <div class="flex justify-between">
+                <span class="text-slate-500">Member:</span>
+                <span id="reviewMemberName" class="font-bold text-slate-800 dark:text-slate-200">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Item:</span>
+                <span id="reviewItemName" class="font-bold text-indigo-600 dark:text-indigo-400">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Requested On:</span>
+                <span id="reviewRequestedDate" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+            </div>
+        </div>
+
+        <form id="reviewRentalStatusForm" class="space-y-4">
+            <input type="hidden" id="reviewHistoryId">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Request Decision *</label>
+                <select id="reviewStatusSelect" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                    <option value="pending">⏳ Pending</option>
+                    <option value="approved">✅ Approved</option>
+                    <option value="rejected">❌ Rejected</option>
+                    <option value="completed">🏁 Completed / Returned</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Admin Note / Feedback (Optional)</label>
+                <textarea id="reviewAdminNote" rows="2" placeholder="e.g. Approved for pickup on Monday..." class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeReviewModal()" class="w-1/2 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-all">Cancel</button>
+                <button type="submit" id="reviewSubmitBtn" class="w-1/2 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm rounded-xl shadow-md transition-all">Save Status</button>
             </div>
         </form>
     </div>
@@ -337,10 +390,18 @@
         `).join('');
     }
 
+    function getStatusBadgeStyle(status) {
+        const s = (status || '').toLowerCase();
+        if (s === 'approved') return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400';
+        if (s === 'rejected') return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400';
+        if (s === 'completed') return 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400';
+        return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400'; // Default pending
+    }
+
     function renderHistoryTable(history) {
         const tbody = document.getElementById('rentalHistoryTableBody');
         if (history.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400 font-medium">No rental history records found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-medium">No rental history records found.</td></tr>`;
             return;
         }
 
@@ -352,9 +413,12 @@
                     Fee: ${currencyFormatter.format(h.rental_fee)}<br>Deposit: ${currencyFormatter.format(h.deposit_fee)}
                 </td>
                 <td class="py-3.5 px-4 text-center">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400">${h.status}</span>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${getStatusBadgeStyle(h.status)}">${h.status}</span>
                 </td>
                 <td class="py-3.5 px-4 text-right text-xs text-slate-500">${h.created_at}</td>
+                <td class="py-3.5 px-4 text-right">
+                    <button onclick="openReviewModal(${h.id})" class="px-3 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-all">Review</button>
+                </td>
             </tr>
         `).join('');
     }
@@ -376,7 +440,7 @@
         `).join('');
     }
 
-    // Modal Edit Operations
+    // Modal Item Edit Operations
     function openEditModal(id) {
         const item = rentalItemsData.find(i => i.id === id);
         if (!item) return;
@@ -422,6 +486,51 @@
             }
         } catch (err) {
             console.error('Error updating:', err);
+        }
+    });
+
+    // Modal History Review Operations
+    function openReviewModal(id) {
+        const req = rentalHistoryData.find(h => h.id === id);
+        if (!req) return;
+
+        document.getElementById('reviewHistoryId').value = req.id;
+        document.getElementById('reviewMemberName').innerText = req.member_name || '-';
+        document.getElementById('reviewItemName').innerText = req.item_name || '-';
+        document.getElementById('reviewRequestedDate').innerText = req.created_at || '-';
+        document.getElementById('reviewStatusSelect').value = (req.status || 'pending').toLowerCase();
+        document.getElementById('reviewAdminNote').value = req.admin_note || '';
+
+        document.getElementById('reviewStatusModal').classList.remove('hidden');
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewStatusModal').classList.add('hidden');
+    }
+
+    document.getElementById('reviewRentalStatusForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('reviewHistoryId').value;
+        const newStatus = document.getElementById('reviewStatusSelect').value;
+        const note = document.getElementById('reviewAdminNote').value.trim();
+
+        const baseUrl = API_URLS.rentalItems.endsWith('/') ? API_URLS.rentalItems : API_URLS.rentalItems + '/';
+
+        try {
+            const res = await fetch(`${baseUrl}requests/${id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ status: newStatus, admin_note: note })
+            });
+
+            if (res.ok) {
+                closeReviewModal();
+                loadData();
+            } else {
+                alert('Failed to update request status.');
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
         }
     });
 
@@ -478,7 +587,7 @@
 
     document.getElementById('historySearchInput')?.addEventListener('input', function(e) {
         const term = e.target.value.toLowerCase();
-        const filtered = rentalHistoryData.filter(h => h.member_name.toLowerCase().includes(term) || h.item_name.toLowerCase().includes(term));
+        const filtered = rentalHistoryData.filter(h => h.member_name.toLowerCase().includes(term) || h.item_name.toLowerCase().includes(term) || (h.status && h.status.toLowerCase().includes(term)));
         renderHistoryTable(filtered);
     });
 

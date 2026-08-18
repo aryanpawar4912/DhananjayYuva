@@ -114,9 +114,13 @@ def member_profile(request):
 def request_loan(request): 
     return render(request, 'member/request_loan.html')
 
-@login_required(login_url='login')
+@login_required
 def member_passbook_view(request):
-    return render(request, 'member/passbook.html')
+    member = Member.objects.filter(user=request.user).first()
+    if not member:
+        return render(request, 'member/passbook.html', {'error': 'No associated member profile found.'})
+
+    return render(request, 'member/passbook.html', {'member': member})
 
 @login_required
 def member_attendance_view(request):

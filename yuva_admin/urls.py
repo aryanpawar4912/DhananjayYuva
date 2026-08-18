@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/admin/collections/', views.AdminCollectionAPI.as_view(), name='admin_collections_api'),
     path('api/admin/rental-items/', views.AdminRentalItemAPI.as_view(), name='admin_rental_items_api'),
     path('api/admin/rental-items/<int:pk>/', views.AdminRentalItemDetailAPI.as_view(), name='admin_rental_item_detail_api'),
+    path('api/admin/rental-items/requests/<int:pk>/', views.AdminRentalRequestDetailAPI.as_view(), name='admin-rental-request-detail'),
 
     # ==========================================
     # 5. MEETINGS & ATTENDANCE APIs
